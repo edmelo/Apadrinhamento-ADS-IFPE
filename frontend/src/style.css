@@ -1439,8 +1439,8 @@ svg {
   display: flex;
   min-height: 100vh;
   width: 100vw;
-  margin: 0; /* Remove margens padrão */
-  overflow: hidden; /* Evita barras de rolagem desnecessárias */
+  margin: 0;
+  overflow: hidden;
 }
 
 /* Lado esquerdo (Verde) */
@@ -1469,21 +1469,68 @@ svg {
 
 /* Estilizando as caixinhas de texto do Login */
 .login-form-section input[type="text"],
-.login-form-section input[type="password"] {
+.login-form-section input[type="password"],
+.login-form-section input[type="email"],
+.login-form-section select {
   width: 100%;
-  padding: 10px 16px; /* Aumenta o espaço dentro da caixinha */
-  border: 1px solid #ccd7cf; /* Borda cinza suave */
-  border-radius: 10px; /* É aqui que a mágica do arredondado acontece! */
-  background-color: #ffffff; /* Fundo branquinho */
-  font-size: 14px;
+  padding: 10px 16px;
+  border: 1px solid #ccd7cf;
+  border-radius: 10px;
+  background-color: #ffffff;
+  font-size: 13px;
   color: var(--ink);
-  transition: all 0.2s ease; /* Deixa as animações suaves */
+  transition: all 0.2s ease;
 }
 
 /* Efeito quando o usuário clica na caixinha para digitar */
 .login-form-section input[type="text"]:focus,
-.login-form-section input[type="password"]:focus {
-  border-color: var(--green); /* A borda fica verde */
-  outline: none; /* Tira aquela borda preta padrão do navegador */
-  box-shadow: 0 0 0 3px rgba(18, 108, 69, 0.15); /* Cria um 'brilho' verde em volta */
+.login-form-section input[type="password"]:focus,
+.login-form-section input[type="email"]:focus,
+.login-form-section select:focus{
+  border-color: var(--green);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(18, 108, 69, 0.15);
+}
+
+/* Estilizando as caixinhas de texto e seleção */
+.login-form-section input[type="text"],
+.login-form-section input[type="password"],
+.login-form-section input[type="email"],
+.login-form-section select {
+  width: 100%;
+  padding: 10px 16px;
+  border: 1px solid #ccd7cf;
+  border-radius: 10px;
+  background-color: #ffffff;
+  font-size: 13px;
+  color: var(--ink);
+  transition: all 0.2s ease;
+}
+
+/* Efeito quando o usuário clica para preencher */
+.login-form-section input[type="text"]:focus,
+.login-form-section input[type="password"]:focus,
+.login-form-section select:focus {
+  border-color: var(--green);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(18, 108, 69, 0.15);
+}
+
+/* Animações de entrada para as telas de Login/Cadastro */
+@keyframes slideFromLeft {
+  0% { opacity: 0; transform: translateX(-50px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slideFromRight {
+  0% { opacity: 0; transform: translateX(50px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+
+.animate-slide-left {
+  animation: slideFromLeft 1.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-slide-right {
+  animation: slideFromRight 1.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }

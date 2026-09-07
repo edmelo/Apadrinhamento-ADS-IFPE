@@ -10,8 +10,8 @@ export default function Login({ onNavigate }: LoginProps) {
 
   return (
     <div className="login-split-container">
-      {/* Lado Esquerdo - Boas Vindas */}
-      <div className="login-banner">
+      {/* Lado Esquerdo - Boas Vindas animado pela esquerda */}
+      <div className="login-banner animate-slide-left" style={{ padding: '4rem 8rem' }}>
         <div className="banner-content">
           <div className="logo" style={{ marginBottom: 20 }}>
             <span className="logo-mark" style={{ backgroundColor: '#6fd28c', color: '#112417' }}>a</span>
@@ -19,16 +19,16 @@ export default function Login({ onNavigate }: LoginProps) {
               apadrinha<span style={{ color: '#6fd28c' }}>ADS</span>
             </span>
           </div>
-          <p className="banner-description" style={{ color: 'white', fontSize: '1rem', lineHeight: 1.5 }}>
-            Conectando calouros e veteranos para uma jornada acadêmica mais colaborativa e acolhedora no IFPE.
-            <br />
-            Seja bem-vindo(a)!
-          </p>
+          <p className="banner-description" style={{ color: 'white', fontSize: '0.9rem', lineHeight: 1.5, marginTop: 0 }}>
+  Conectando calouros e veteranos para uma jornada acadêmica mais colaborativa e acolhedora no IFPE.
+  <br />
+  Seja bem-vindo(a)!
+</p>
         </div>
       </div>
 
-      {/* Lado Direito - Formulário */}
-      <div className="login-form-section">
+      {/* Lado Direito - Formulário animado pela direita */}
+      <div className="login-form-section animate-slide-right">
         <form
           className="card"
           style={{
@@ -50,14 +50,14 @@ export default function Login({ onNavigate }: LoginProps) {
             Informe suas credenciais institucionais para continuar.
           </p>
 
-          <label style={{ display: 'grid', gap: 6, fontSize: 13, fontWeight: 600, marginBottom: 14 }}>
+          <label style={{ display: 'grid', gap: 6, fontSize: 13, fontWeight: 500, marginBottom: 14 }}>
             <span>E-mail ou nome de usuário <span style={{ color: 'red' }}>*</span></span>
-            <input type="text" placeholder="seunome@discente.ifpe.edu.br" required style={{ fontWeight: 400 }} />
+            <input type="text" placeholder="seunome@discente.ifpe.edu.br" required style={{ fontWeight: 500 }} />
           </label>
           
-          <label style={{ display: 'grid', gap: 6, fontSize: 13, fontWeight: 600, marginBottom: 14 }}>
+          <label style={{ display: 'grid', gap: 6, fontSize: 13, fontWeight: 500, marginBottom: 14 }}>
             <span>Senha <span style={{ color: 'red' }}>*</span></span>
-            <input type="password" placeholder="••••••••" required style={{ fontWeight: 400 }} />
+            <input type="password" placeholder="••••••••" required style={{ fontWeight: 500 }} />
           </label>
 
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, fontSize: 13 }}>

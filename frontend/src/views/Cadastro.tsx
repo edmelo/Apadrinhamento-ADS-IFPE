@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useToast } from '../context/ToastContext';
 import type { ViewId } from '../types';
 
@@ -8,88 +8,153 @@ interface CadastroProps {
 
 export default function Cadastro({ onNavigate }: CadastroProps) {
   const { showToast } = useToast();
-  const [tipoPerfil, setTipoPerfil] = useState<'afilhado' | 'padrinho'>('afilhado');
+  // O estado aceita 4 opções distintas.
+  const [tipoPerfil, setTipoPerfil] = useState<'afilhado' | 'afilhada' | 'padrinho' | 'madrinha'>('afilhada');
+  
+  const [periodo, setPeriodo] = useState('1º período');
+
+  // A lógica verifica se o usuário é calouro(a) ou veterano(a).
+  useEffect(() => {
+    if (tipoPerfil === 'afilhado' || tipoPerfil === 'afilhada') setPeriodo('1º período');
+    else setPeriodo('3º período');
+  }, [tipoPerfil]);
 
   return (
-    <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', background: 'var(--canvas)', padding: '32px 0' }}>
-      <form
-        className="card"
-        style={{ width: 'min(460px, 92vw)', padding: 32 }}
-        onSubmit={(e) => {
-          e.preventDefault();
-          showToast('Cadastro realizado com sucesso!');
-          onNavigate('inicio');
-        }}
-      >
-        <div className="logo" style={{ marginBottom: 26 }}>
-          <span className="logo-mark">a</span>
-          <span style={{ color: 'var(--ink)' }}>
-            apadrinha<span style={{ color: 'var(--green)' }}>ADS</span>
-          </span>
-        </div>
+    <div className="login-split-container">
+      
+      {/* Lado Esquerdo - Formulário */}
+      <div className="login-form-section animate-slide-left">
+        <form
+          className="card"
+          style={{ width: 'min(550px, 92vw)', minHeight: 500, padding: 48, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}
+          onSubmit={(e) => {
+            e.preventDefault();
+            showToast('Cadastro realizado com sucesso!');
+            onNavigate('inicio');
+          }}
+        >
+          <h1 style={{ font: '600 22px Outfit, sans-serif', margin: '0 0 6px' }}>Cadastre-se.</h1>
+          <p className="subtitle" style={{ margin: '0 0 22px' }}>
+            Leva menos de dois minutos para começar.
+          </p>
 
-        <h1 style={{ font: '600 22px Outfit, sans-serif', margin: '0 0 6px' }}>Criar conta</h1>
-        <p className="subtitle" style={{ margin: '0 0 22px' }}>
-          Leva menos de dois minutos para começar.
-        </p>
-
-        <label style={{ display: 'grid', gap: 6, fontSize: 12, fontWeight: 700, marginBottom: 14 }}>
-          Nome completo
-          <input placeholder="Seu nome" required />
-        </label>
-        <label style={{ display: 'grid', gap: 6, fontSize: 12, fontWeight: 700, marginBottom: 14 }}>
-          E-mail institucional
-          <input type="email" placeholder="seunome@discente.ifpe.edu.br" required />
-        </label>
-        <label style={{ display: 'grid', gap: 6, fontSize: 12, fontWeight: 700, marginBottom: 14 }}>
-          Senha
-          <input type="password" placeholder="Crie uma senha" required />
-        </label>
-
-        <label style={{ display: 'grid', gap: 6, fontSize: 12, fontWeight: 700, marginBottom: 14 }}>
-          Quero me cadastrar como
-          <select value={tipoPerfil} onChange={(e) => setTipoPerfil(e.target.value as typeof tipoPerfil)}>
-            <option value="afilhado">Afilhado(a) — sou calouro(a)</option>
-            <option value="padrinho">Padrinho/madrinha — quero mentorar</option>
-          </select>
-        </label>
-
-        {tipoPerfil === 'afilhado' ? (
-          <label style={{ display: 'grid', gap: 6, fontSize: 12, fontWeight: 700, marginBottom: 20 }}>
-            Período
-            <select defaultValue="1º período">
-              <option>1º período</option>
-              <option>2º período</option>
-            </select>
+          <label style={{ display: 'grid', gap: 6, fontSize: 13, fontWeight: 500, marginBottom: 14 }}>
+            <span>Nome completo <span style={{ color: 'red' }}>*</span></span>
+            <input type="text" placeholder="Seu nome" required />
           </label>
-        ) : (
-          <label style={{ display: 'grid', gap: 6, fontSize: 12, fontWeight: 700, marginBottom: 20 }}>
-            Período
-            <select defaultValue="5º período">
-              <option>3º período</option>
-              <option>4º período</option>
-              <option>5º período</option>
-              <option>6º período</option>
-            </select>
+          
+          <label style={{ display: 'grid', gap: 6, fontSize: 13, fontWeight: 500, marginBottom: 14 }}>
+            <span>E-mail institucional <span style={{ color: 'red' }}>*</span></span>
+            <input type="email" placeholder="seunome@discente.ifpe.edu.br" required />
           </label>
-        )}
+          
+          <label style={{ display: 'grid', gap: 6, fontSize: 13, fontWeight: 500, marginBottom: 14 }}>
+            <span>Senha <span style={{ color: 'red' }}>*</span></span>
+            <input type="password" placeholder="Crie uma senha" required />
+          </label>
 
-        <button className="primary" type="submit" style={{ width: '100%', justifyContent: 'center' }}>
-          Criar minha conta
-        </button>
+          {/* Os 4 botões de perfil */}
+          <div style={{ display: 'grid', gap: 6, fontSize: 13, fontWeight: 500, marginBottom: 14 }}>
+            <span>Quero me cadastrar como: <span style={{ color: 'red' }}>*</span></span>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              <button 
+                type="button" 
+                className={`filter ${tipoPerfil === 'afilhada' ? 'active' : ''}`}
+                onClick={() => setTipoPerfil('afilhada')}
+              >
+                Afilhada (caloura)
+              </button>
+              <button 
+                type="button" 
+                className={`filter ${tipoPerfil === 'afilhado' ? 'active' : ''}`}
+                onClick={() => setTipoPerfil('afilhado')}
+              >
+                Afilhado (calouro)
+              </button>
+              <button 
+                type="button" 
+                className={`filter ${tipoPerfil === 'madrinha' ? 'active' : ''}`}
+                onClick={() => setTipoPerfil('madrinha')}
+              >
+                Madrinha (mentora)
+              </button>
+              <button 
+                type="button" 
+                className={`filter ${tipoPerfil === 'padrinho' ? 'active' : ''}`}
+                onClick={() => setTipoPerfil('padrinho')}
+              >
+                Padrinho (mentor)
+              </button>
+            </div>
+          </div>
 
-        <p style={{ textAlign: 'center', fontSize: 13, marginTop: 18 }}>
-          Já tem conta?{' '}
-          <button
-            type="button"
-            className="text-button"
-            style={{ display: 'inline', padding: 0 }}
-            onClick={() => onNavigate('login')}
-          >
-            Entrar
+          {/* Renderização baseada em afilhado(a) vs padrinho/madrinha */}
+          <div style={{ display: 'grid', gap: 6, fontSize: 13, fontWeight: 500, marginBottom: 20 }}>
+            <span>Período: <span style={{ color: 'red' }}>*</span></span>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              {tipoPerfil === 'afilhado' || tipoPerfil === 'afilhada' ? (
+                <>
+                  {['1º período', '2º período'].map(p => (
+                    <button 
+                      key={p} type="button" 
+                      className={`filter ${periodo === p ? 'active' : ''}`}
+                      onClick={() => setPeriodo(p)}
+                    >
+                      {p}
+                    </button>
+                  ))}
+                </>
+              ) : (
+                <>
+                  {['3º período', '4º período', '5º período', '6º período'].map(p => (
+                    <button 
+                      key={p} type="button" 
+                      className={`filter ${periodo === p ? 'active' : ''}`}
+                      onClick={() => setPeriodo(p)}
+                    >
+                      {p}
+                    </button>
+                  ))}
+                </>
+              )}
+            </div>
+          </div>
+
+          <button className="primary" type="submit" style={{ width: '100%', justifyContent: 'center' }}>
+            Criar minha conta
           </button>
-        </p>
-      </form>
+
+          <p style={{ textAlign: 'center', fontSize: 13, marginTop: 18 }}>
+            Já tem conta?{' '}
+            <button
+              type="button"
+              className="text-button"
+              style={{ display: 'inline', padding: 0 }}
+              onClick={() => onNavigate('login')}
+            >
+              Entrar
+            </button>
+          </p>
+        </form>
+      </div>
+
+      {/* Lado Direito - Banner alinhado à direita com padding invertido */}
+      <div className="login-banner animate-slide-right" style={{ justifyContent: 'flex-end', padding: '4rem 8rem' }}>
+        <div className="banner-content" style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+          
+          <div className="logo" style={{ marginBottom: 20, justifyContent: 'flex-end' }}>
+            <span className="logo-mark" style={{ backgroundColor: '#6fd28c', color: '#112417' }}>a</span>
+            <span style={{ color: 'white', fontSize: '2.2rem', fontWeight: 700, marginLeft: '8px' }}>
+              apadrinha<span style={{ color: '#6fd28c' }}>ADS</span>
+            </span>
+          </div>
+
+          <p className="banner-description" style={{ color: 'white', fontSize: '0.9rem', lineHeight: 1.5, marginTop: 0 }}> Sua jornada começa aqui. Junte-se a dezenas de estudantes construindo uma rede de apoio e colaboração em ADS!
+  <br /> Seja bem-vindo(a)!
+</p>
+        </div>
+      </div>
+      
     </div>
   );
 }
