@@ -55,3 +55,24 @@ export interface FaqSection {
   title: string;
   items: FaqItem[];
 }
+
+/* TIPOS DA AGENDA */
+
+export type EventType = 'apadrinhamento' | 'academico' | 'pessoal' | 'evento';
+
+export type EventStatus = 'confirmado' | 'aguardando' | 'agendado' | 'concluido' | 'cancelado';
+
+export type EventMode = MeetingType;
+
+export interface AgendaEvent {
+  id: string;
+  date: string;
+  time: string;
+  title: string;
+  type: EventType;
+  status: EventStatus;
+  mode: EventMode;
+  location: string;
+  personName: string;
+  description: string;
+}
