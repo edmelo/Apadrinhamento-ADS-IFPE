@@ -103,15 +103,25 @@ export function AgendaCalendar({
               <option key={m} value={i}>{m}</option>
             ))}
           </select>
-          <select
-            value={viewYear}
-            onChange={(e) => onSetYear(clampYear(Number(e.target.value)))}
-            style={{ border: 'none', background: 'transparent', font: 'inherit', cursor: 'pointer' }}
-          >
-            {Array.from({ length: MAX_YEAR - MIN_YEAR + 1 }, (_, i) => MIN_YEAR + i).map((y) => (
-              <option key={y} value={y}>{y}</option>
-            ))}
-          </select>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+            <button
+              type="button"
+              className="icon-button"
+              disabled={viewYear <= MIN_YEAR}
+              onClick={() => onSetYear(clampYear(viewYear - 1))}
+            >
+              ‹
+            </button>
+            <span style={{ minWidth: 44, textAlign: 'center' }}>{viewYear}</span>
+            <button
+              type="button"
+              className="icon-button"
+              disabled={viewYear >= MAX_YEAR}
+              onClick={() => onSetYear(clampYear(viewYear + 1))}
+            >
+              ›
+            </button>
+          </span>
         </h2>
         <button className="icon-button" onClick={() => onChangeMonth(1)}>›</button>
       </div>
