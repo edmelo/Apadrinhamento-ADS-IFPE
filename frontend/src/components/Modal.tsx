@@ -12,7 +12,7 @@ export default function Modal() {
 
   if (!modal) return null;
 
-  const handleSubmit = (successMessage: string) => (e: React.FormEvent) => {
+  const handleSubmit = (successMessage: string) => (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     closeModal();
     showToast(successMessage);
@@ -116,6 +116,50 @@ export default function Modal() {
               <button className="primary" type="submit">
                 Publicar aviso
               </button>
+            </form>
+          )}
+
+          {modal.kind === 'editar-perfil' && (
+            <form onSubmit={handleSubmit('Perfil atualizado com sucesso!')}>
+              <h2>Editar perfil</h2>
+              <p>Essas informações ajudam a tornar o apadrinhamento mais proveitoso.</p>
+
+              <label>
+                Nome completo
+                <input defaultValue="Usuário" required />
+              </label>
+              <label>
+                Período
+                <select defaultValue="1º período">
+                  <option>1º período</option>
+                  <option>2º período</option>
+                </select>
+              </label>
+              <label>
+                Interesses
+                <input defaultValue="Lógica, front-end e organização" />
+              </label>
+              <label>
+                Disponibilidade
+                <select defaultValue="Tardes durante a semana">
+                  <option>Tardes durante a semana</option>
+                  <option>Manhãs durante a semana</option>
+                  <option>Noites</option>
+                </select>
+              </label>
+              <label>
+                O que você espera do apadrinhamento?
+                <textarea defaultValue="Quero me organizar melhor para o início do curso e conhecer mais sobre as disciplinas." />
+              </label>
+
+              <div className="form-actions">
+                <button type="button" className="outline" onClick={closeModal}>
+                  Cancelar
+                </button>
+                <button className="primary" type="submit">
+                  Salvar alterações
+                </button>
+              </div>
             </form>
           )}
 
