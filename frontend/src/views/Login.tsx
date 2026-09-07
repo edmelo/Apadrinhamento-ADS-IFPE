@@ -31,24 +31,31 @@ export default function Login({ onNavigate }: LoginProps) {
       <div className="login-form-section">
         <form
           className="card"
-          style={{ width: 'min(400px, 92vw)', padding: 32 }}
+          style={{
+            width: 'min(550px, 92vw)',
+            minHeight: 400,
+            padding: 48,
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center"
+          }}
           onSubmit={(e) => {
             e.preventDefault();
             showToast('Login realizado com sucesso!');
             onNavigate('inicio');
           }}
         >
-          <h1 style={{ font: '600 22px Outfit, sans-serif', margin: '0 0 6px' }}>Acessar o sistema</h1>
+          <h1 style={{ font: '600 22px Outfit, sans-serif', margin: '0 0 6px' }}>Faça o seu login.</h1>
           <p className="subtitle" style={{ margin: '0 0 22px' }}>
             Informe suas credenciais institucionais para continuar.
           </p>
 
-          <label style={{ display: 'grid', gap: 6, fontSize: 12, fontWeight: 600, marginBottom: 14 }}>
-            <span>E-mail ou Usuário <span style={{ color: 'red' }}>*</span></span>
+          <label style={{ display: 'grid', gap: 6, fontSize: 13, fontWeight: 600, marginBottom: 14 }}>
+            <span>E-mail ou nome de usuário <span style={{ color: 'red' }}>*</span></span>
             <input type="text" placeholder="seunome@discente.ifpe.edu.br" required style={{ fontWeight: 400 }} />
           </label>
           
-          <label style={{ display: 'grid', gap: 6, fontSize: 12, fontWeight: 600, marginBottom: 14 }}>
+          <label style={{ display: 'grid', gap: 6, fontSize: 13, fontWeight: 600, marginBottom: 14 }}>
             <span>Senha <span style={{ color: 'red' }}>*</span></span>
             <input type="password" placeholder="••••••••" required style={{ fontWeight: 400 }} />
           </label>

@@ -1445,7 +1445,7 @@ svg {
 
 /* Lado esquerdo (Verde) */
 .login-banner {
-  flex: 4;
+  flex: 2;
   background-color: #112417;
   display: flex;
   align-items: center;
@@ -1460,9 +1460,30 @@ svg {
 /* Lado direito (Branco) */
 .login-form-section {
   flex: 6;
-  background-color: #f7f9f6;
+  background-color: #e5e7eb;
   display: flex;
   justify-content: center;
   align-items: center;
   padding: 2rem;
+}
+
+/* Estilizando as caixinhas de texto do Login */
+.login-form-section input[type="text"],
+.login-form-section input[type="password"] {
+  width: 100%;
+  padding: 10px 16px; /* Aumenta o espaço dentro da caixinha */
+  border: 1px solid #ccd7cf; /* Borda cinza suave */
+  border-radius: 10px; /* É aqui que a mágica do arredondado acontece! */
+  background-color: #ffffff; /* Fundo branquinho */
+  font-size: 14px;
+  color: var(--ink);
+  transition: all 0.2s ease; /* Deixa as animações suaves */
+}
+
+/* Efeito quando o usuário clica na caixinha para digitar */
+.login-form-section input[type="text"]:focus,
+.login-form-section input[type="password"]:focus {
+  border-color: var(--green); /* A borda fica verde */
+  outline: none; /* Tira aquela borda preta padrão do navegador */
+  box-shadow: 0 0 0 3px rgba(18, 108, 69, 0.15); /* Cria um 'brilho' verde em volta */
 }
