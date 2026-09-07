@@ -940,7 +940,7 @@ svg {
 .author-callout {
     text-align: center;
     background: #f1f7f2;
-}
+    }
 
 .author-callout .avatar {
     margin: auto;
@@ -1198,17 +1198,22 @@ svg {
 }
 
 .modal-backdrop {
-    display: none;
+    display: grid;
+    visibility: hidden;
+    opacity: 0;
     position: fixed;
     inset: 0;
     background: rgba(20, 33, 25, 0.52);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
     z-index: 10;
     padding: 20px;
     place-items: center;
 }
 
 .modal-backdrop.open {
-    display: grid;
+    visibility: visible;
+    opacity: 1;
 }
 
 .modal {
@@ -1218,6 +1223,15 @@ svg {
     padding: 28px;
     position: relative;
     box-shadow: 0 16px 50px rgba(0, 0, 0, 0.2);
+
+    transform: scale(0.9) translateY(20px);
+    opacity: 0;
+    transition: all 1s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.modal-backdrop.open .modal {
+    transform: scale(1) translateY(0);
+    opacity: 1;
 }
 
 .modal-close {
@@ -1436,54 +1450,79 @@ svg {
 
 /* Layout da Tela de Login e Cadastro */
 .login-split-container {
-  display: flex;
-  min-height: 100vh;
-  width: 100vw;
-  margin: 0; /* Remove margens padrão */
-  overflow: hidden; /* Evita barras de rolagem desnecessárias */
+    display: flex;
+    min-height: 100vh;
+    width: 100vw;
+    margin: 0;
+    overflow: hidden;
 }
 
 /* Lado esquerdo (Verde) */
 .login-banner {
-  flex: 2;
-  background-color: #112417;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 4rem;
+    flex: 2;
+    background-color: #112417;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem;
 }
 
 .login-banner .banner-content {
-  max-width: 500px;
+    max-width: 500px;
 }
 
 /* Lado direito (Branco) */
 .login-form-section {
-  flex: 6;
-  background-color: #e5e7eb;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 2rem;
+    flex: 6;
+    background-color: #f7f9f6;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 2rem;
 }
 
-/* Estilizando as caixinhas de texto do Login */
+/* Estilizando as caixinhas de texto e seleção */
 .login-form-section input[type="text"],
-.login-form-section input[type="password"] {
-  width: 100%;
-  padding: 10px 16px; /* Aumenta o espaço dentro da caixinha */
-  border: 1px solid #ccd7cf; /* Borda cinza suave */
-  border-radius: 10px; /* É aqui que a mágica do arredondado acontece! */
-  background-color: #ffffff; /* Fundo branquinho */
-  font-size: 14px;
-  color: var(--ink);
-  transition: all 0.2s ease; /* Deixa as animações suaves */
+.login-form-section input[type="password"],
+.login-form-section input[type="email"],
+.login-form-section select,
+.modal input {
+    width: 100%;
+    padding: 10px 16px;
+    border: 1px solid #ccd7cf;
+    border-radius: 10px;
+    background-color: #ffffff;
+    font-size: 13px;
+    color: var(--ink);
+    transition: all 0.2s ease;
 }
 
-/* Efeito quando o usuário clica na caixinha para digitar */
+/* Efeito quando o usuário clica para preencher */
 .login-form-section input[type="text"]:focus,
-.login-form-section input[type="password"]:focus {
-  border-color: var(--green); /* A borda fica verde */
-  outline: none; /* Tira aquela borda preta padrão do navegador */
-  box-shadow: 0 0 0 3px rgba(18, 108, 69, 0.15); /* Cria um 'brilho' verde em volta */
+.login-form-section input[type="password"]:focus,
+.login-form-section input[type="email"]:focus,
+.login-form-section select:focus,
+.modal input:focus {
+    border-color: var(--green);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(18, 108, 69, 0.15);
+}
+
+/* Animações de entrada para as telas de Login/Cadastro */
+@keyframes slideFromLeft {
+    0% { opacity: 0; transform: translateX(-50px); }
+    100% { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slideFromRight {
+    0% { opacity: 0; transform: translateX(50px); }
+    100% { opacity: 1; transform: translateX(0); }
+}
+
+.animate-slide-left {
+    animation: slideFromLeft 1.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-slide-right {
+    animation: slideFromRight 1.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }

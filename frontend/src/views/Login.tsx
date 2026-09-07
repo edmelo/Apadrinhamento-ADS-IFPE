@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useToast } from '../context/ToastContext';
 import type { ViewId } from '../types';
 
@@ -7,11 +8,13 @@ interface LoginProps {
 
 export default function Login({ onNavigate }: LoginProps) {
   const { showToast } = useToast();
+  // Estado para controlar se o modal está aberto ou fechado
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   return (
     <div className="login-split-container">
       {/* Lado Esquerdo - Boas Vindas */}
-      <div className="login-banner">
+      <div className="login-banner animate-slide-left" style={{ padding: '4rem 8rem' }}>
         <div className="banner-content">
           <div className="logo" style={{ marginBottom: 20 }}>
             <span className="logo-mark" style={{ backgroundColor: '#6fd28c', color: '#112417' }}>a</span>
@@ -19,7 +22,7 @@ export default function Login({ onNavigate }: LoginProps) {
               apadrinha<span style={{ color: '#6fd28c' }}>ADS</span>
             </span>
           </div>
-          <p className="banner-description" style={{ color: 'white', fontSize: '1rem', lineHeight: 1.5 }}>
+          <p className="banner-description" style={{ color: 'white', fontSize: '0.9rem', lineHeight: 1.5, marginTop: 0 }}>
             Conectando calouros e veteranos para uma jornada acadêmica mais colaborativa e acolhedora no IFPE.
             <br />
             Seja bem-vindo(a)!
@@ -28,7 +31,7 @@ export default function Login({ onNavigate }: LoginProps) {
       </div>
 
       {/* Lado Direito - Formulário */}
-      <div className="login-form-section">
+      <div className="login-form-section animate-slide-right">
         <form
           className="card"
           style={{
@@ -50,23 +53,30 @@ export default function Login({ onNavigate }: LoginProps) {
             Informe suas credenciais institucionais para continuar.
           </p>
 
-          <label style={{ display: 'grid', gap: 6, fontSize: 13, fontWeight: 600, marginBottom: 14 }}>
+          <label style={{ display: 'grid', gap: 6, fontSize: 13, fontWeight: 500, marginBottom: 14 }}>
             <span>E-mail ou nome de usuário <span style={{ color: 'red' }}>*</span></span>
-            <input type="text" placeholder="seunome@discente.ifpe.edu.br" required style={{ fontWeight: 400 }} />
+            <input type="text" placeholder="seunome@discente.ifpe.edu.br" required style={{ fontWeight: 500 }} />
           </label>
           
-          <label style={{ display: 'grid', gap: 6, fontSize: 13, fontWeight: 600, marginBottom: 14 }}>
+          <label style={{ display: 'grid', gap: 6, fontSize: 13, fontWeight: 500, marginBottom: 14 }}>
             <span>Senha <span style={{ color: 'red' }}>*</span></span>
-            <input type="password" placeholder="••••••••" required style={{ fontWeight: 400 }} />
+            <input type="password" placeholder="••••••••" required style={{ fontWeight: 500 }} />
           </label>
 
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, fontSize: 13 }}>
             <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
               <input type="checkbox" style={{ margin: 0 }} /> Manter conectado
             </label>
-            <a href="#" style={{ color: 'var(--green)', textDecoration: 'none', fontWeight: 600 }}>
+            
+            {/* O onClick aqui abre o Modal! */}
+            <button 
+              type="button"
+              className="text-button" 
+              style={{ fontWeight: 600, padding: 0 }}
+              onClick={() => setIsModalOpen(true)}
+            >
               Esqueci minha senha
-            </a>
+            </button>
           </div>
 
           <button className="primary" type="submit" style={{ width: '100%', justifyContent: 'center' }}>
@@ -86,6 +96,40 @@ export default function Login({ onNavigate }: LoginProps) {
           </p>
         </form>
       </div>
+
+      {/* ====== Modal de redefinir a senha ====== */}
+      <div className={`modal-backdrop ${isModalOpen ? 'open' : ''}`} onClick={() => setIsModalOpen(false)}>
+        {/* O e.stopPropagation() impede que clicar dentro do modal feche ele */}
+        <div className="modal" onClick={(e) => e.stopPropagation()}>
+          
+          {/* Botão X para fechar */}
+          <button className="modal-close" onClick={() => setIsModalOpen(false)}>
+            ×
+          </button>
+
+          <h2 style={{ textAlign: 'center', margin: '0 0 10px' }}>Redefina sua senha.</h2>
+          <p style={{ textAlign: 'center', fontSize: '14px', marginBottom: '30px' }}>
+            Insira o seu e-mail institucional e enviaremos um link para a redefinição da senha.
+          </p>
+
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            showToast('Link de redefinição enviado para o seu e-mail!');
+            setIsModalOpen(false); // Fecha o modal após enviar
+          }}>
+            <label style={{ display: 'grid', gap: 6, fontSize: 13, fontWeight: 500, marginBottom: 24 }}>
+              <span>E-mail institucional <span style={{ color: 'red' }}>*</span></span>
+              <input type="email" placeholder="seunome@discente.ifpe.edu.br" required style={{ width: '100%' }} />
+            </label>
+
+            <button className="primary" type="submit" style={{ width: '100%', justifyContent: 'center' }}>
+              Redefinir senha
+            </button>
+          </form>
+
+        </div>
+      </div>
+
     </div>
   );
 }
