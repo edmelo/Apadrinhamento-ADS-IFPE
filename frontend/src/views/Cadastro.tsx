@@ -8,14 +8,15 @@ interface CadastroProps {
 
 export default function Cadastro({ onNavigate }: CadastroProps) {
   const { showToast } = useToast();
-  // O estado aceita 4 opções distintas.
-  const [tipoPerfil, setTipoPerfil] = useState<'afilhado' | 'afilhada' | 'padrinho' | 'madrinha'>('afilhada');
+  
+  // 1. O estado agora aceita apenas 3 opções!
+  const [tipoPerfil, setTipoPerfil] = useState<'afilhado' | 'madrinha' | 'padrinho'>('afilhado');
   
   const [periodo, setPeriodo] = useState('1º período');
 
-  // A lógica verifica se o usuário é calouro(a) ou veterano(a).
+  // 2. A lógica verifica se é afilhado(a) para resetar o período
   useEffect(() => {
-    if (tipoPerfil === 'afilhado' || tipoPerfil === 'afilhada') setPeriodo('1º período');
+    if (tipoPerfil === 'afilhado') setPeriodo('1º período');
     else setPeriodo('3º período');
   }, [tipoPerfil]);
 
@@ -53,37 +54,30 @@ export default function Cadastro({ onNavigate }: CadastroProps) {
             <input type="password" placeholder="Crie uma senha" required />
           </label>
 
-          {/* Os 4 botões de perfil */}
+          {/* 3. Atualizado: Apenas 3 botões de perfil */}
           <div style={{ display: 'grid', gap: 6, fontSize: 13, fontWeight: 500, marginBottom: 14 }}>
             <span>Quero me cadastrar como: <span style={{ color: 'red' }}>*</span></span>
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
               <button 
                 type="button" 
-                className={`filter ${tipoPerfil === 'afilhada' ? 'active' : ''}`}
-                onClick={() => setTipoPerfil('afilhada')}
-              >
-                Afilhada (caloura)
-              </button>
-              <button 
-                type="button" 
                 className={`filter ${tipoPerfil === 'afilhado' ? 'active' : ''}`}
                 onClick={() => setTipoPerfil('afilhado')}
               >
-                Afilhado (calouro)
+                Afilhado(a)
               </button>
               <button 
                 type="button" 
                 className={`filter ${tipoPerfil === 'madrinha' ? 'active' : ''}`}
                 onClick={() => setTipoPerfil('madrinha')}
               >
-                Madrinha (mentora)
+                Madrinha
               </button>
               <button 
                 type="button" 
                 className={`filter ${tipoPerfil === 'padrinho' ? 'active' : ''}`}
                 onClick={() => setTipoPerfil('padrinho')}
               >
-                Padrinho (mentor)
+                Padrinho
               </button>
             </div>
           </div>
@@ -92,7 +86,7 @@ export default function Cadastro({ onNavigate }: CadastroProps) {
           <div style={{ display: 'grid', gap: 6, fontSize: 13, fontWeight: 500, marginBottom: 20 }}>
             <span>Período: <span style={{ color: 'red' }}>*</span></span>
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-              {tipoPerfil === 'afilhado' || tipoPerfil === 'afilhada' ? (
+              {tipoPerfil === 'afilhado' ? (
                 <>
                   {['1º período', '2º período'].map(p => (
                     <button 

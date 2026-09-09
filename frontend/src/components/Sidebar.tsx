@@ -60,10 +60,10 @@ export default function Sidebar({ currentView, onNavigate, open }: SidebarProps)
           </span>
           <Icon name="more" />
         </button>
-        <button className="nav-item" onClick={() => onNavigate('login')}>
+        {/* <button className="nav-item" onClick={() => onNavigate('login')}>
           <Icon name="x" />
           Sair
-        </button>
+        </button> */}
       </div>
     </aside>
   );
