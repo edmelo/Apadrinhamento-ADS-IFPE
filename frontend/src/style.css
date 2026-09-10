@@ -1526,3 +1526,16 @@ svg {
 .animate-slide-right {
     animation: slideFromRight 1.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
+
+/* Variação vermelha para botões de alerta/saída */
+button.primary.danger {
+  background-color: #b23b3b;
+  border-color: #b23b3b;
+}
+
+button.primary.danger:hover {
+  background-color: #8f2f2f; /* Um vermelho um pouco mais escuro */
+  border-color: #8f2f2f;
+  box-shadow: 0 4px 8px rgba(178, 59, 59, 0.3); /* Uma sombrinha suave! */
+}
+

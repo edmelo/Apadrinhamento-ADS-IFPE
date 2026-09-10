@@ -50,12 +50,13 @@ export default function Topbar({ onToggleMenu, onNavigate }: TopbarProps) {
             Você precisará fazer login novamente para acessar sua conta.
           </p>
 
-          <div style={{ display: 'flex', gap: '12px' }}>
+          <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
             <button 
               type="button" 
               className="outline" 
               style={{ 
-                flex: 1, 
+                flex: 1,
+                margin: 0, 
                 display: 'flex', 
                 alignItems: 'center', 
                 justifyContent: 'center', 
@@ -69,13 +70,14 @@ export default function Topbar({ onToggleMenu, onNavigate }: TopbarProps) {
             </button>
             <button 
               type="button" 
-              className="primary" 
+              className="primary danger" 
               style={{ 
                 flex: 1, 
+                margin: 0,
                 display: 'flex', 
                 alignItems: 'center', 
                 justifyContent: 'center', 
-                backgroundColor: '#b23b3b', 
+                /* backgroundColor foi removido daqui! */
                 height: '44px', 
                 padding: '0', 
                 boxSizing: 'border-box' 
