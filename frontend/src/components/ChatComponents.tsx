@@ -110,8 +110,8 @@ export function ChatBubble({ message }: ChatBubbleProps) {
       <div
         style={{
           maxWidth: '70%',
-          background: mine ? '#2fa86a' : '#f1f1f1',
-          color: mine ? '#fff' : '#222',
+          background: mine ? '#e3f2e8' : '#f1f1f1',
+          color: mine ? '#245c3c' : '#222',
           padding: '9px 13px',
           borderRadius: 14,
           borderBottomRightRadius: mine ? 4 : 14,

@@ -21,6 +21,15 @@ export interface Mentor {
   avatarClass: 'avatar-orange' | 'avatar-purple';
 }
 
+export interface TopicAnswer {
+  id: string;
+  authorName: string;
+  authorInitials: string;
+  avatarClass: 'avatar-orange' | 'avatar-green' | 'avatar-purple';
+  text: string;
+  time: string;
+}
+
 export interface Topic {
   title: string;
   description: string;
@@ -29,6 +38,8 @@ export interface Topic {
   time: string;
   initials: string;
   avatarClass: 'avatar-orange' | 'avatar-green';
+  authorName: string;
+  answers: TopicAnswer[];
 }
 
 export interface Announcement {
