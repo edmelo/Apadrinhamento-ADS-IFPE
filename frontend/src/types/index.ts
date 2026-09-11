@@ -2,6 +2,7 @@ export type ViewId =
   | 'inicio'
   | 'encontrar'
   | 'agenda'
+  | 'chat'
   | 'forum'
   | 'avisos'
   | 'admin'
@@ -75,4 +76,24 @@ export interface AgendaEvent {
   location: string;
   personName: string;
   description: string;
+}
+
+/* CHAT */
+
+export interface ChatMessage {
+  id: string;
+  sender: 'me' | 'them';
+  text: string;
+  time: string;
+}
+
+export interface ChatConversation {
+  id: string;
+  name: string;
+  initials: string;
+  avatarClass: 'avatar-purple' | 'avatar-green' | 'avatar-orange';
+  role: string;
+  course: string;
+  period: string;
+  online: boolean;
 }

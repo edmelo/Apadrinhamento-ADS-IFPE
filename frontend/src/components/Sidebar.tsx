@@ -11,6 +11,7 @@ const menuItems: { id: ViewId; label: string; icon: string }[] = [
   { id: 'inicio', label: 'Início', icon: 'home' },
   { id: 'encontrar', label: 'Encontrar padrinho', icon: 'users' },
   { id: 'agenda', label: 'Agenda', icon: 'calendar' },
+  { id: 'chat', label: 'Chat', icon: 'send' },
   { id: 'forum', label: 'Fórum', icon: 'message' },
   { id: 'avisos', label: 'Mural de avisos', icon: 'bookmark' },
 ];

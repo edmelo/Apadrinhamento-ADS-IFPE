@@ -17,6 +17,7 @@ import Login from './views/Login';
 import Cadastro from './views/Cadastro';
 import Faq from './views/Faq';
 import Notificacoes from './views/Notificacoes';
+import Chat from './views/Chat';
 
 const AUTH_VIEWS: ViewId[] = ['login', 'cadastro'];
 
@@ -48,6 +49,8 @@ function AppShell() {
         return <Encontrar />;
       case 'agenda':
         return <Agenda />;
+      case 'chat':
+        return <Chat onNavigate={navigate} />;
       case 'forum':
         return <Forum />;
       case 'avisos':
