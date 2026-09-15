@@ -10,6 +10,7 @@ Plataforma web colaborativa desenvolvida para conectar estudantes veteranos (pad
 * **Integrante 2**: Italo - Desenvolvedor Back-end (Lógica de Negócio e APIs)
 * **Integrante 3**: Fredson - Desenvolvedor Back-end (Persistência de Dados e Segurança)
 * **Integrante 4**: Thuanny - Desenvolvedor Front-end & QA (Interface UI/UX, Testes e Documentação)
+* **Integrante 4**: Matheus - Desenvolvedor Front-end & QA (Interface UI/UX, Testes e Documentação)
 
 ---
 
