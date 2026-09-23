@@ -7,10 +7,10 @@ Plataforma web colaborativa desenvolvida para conectar estudantes veteranos (pad
 ## 👥 Integrantes da Equipe
 
 * **Integrante 1**: Ednaldo Batista de Melo - Arquiteto & Líder Técnico (Arquitetura e Integração)
-* **Integrante 2**: Italo - Desenvolvedor Back-end (Lógica de Negócio e APIs)
-* **Integrante 3**: Fredson - Desenvolvedor Back-end (Persistência de Dados e Segurança)
-* **Integrante 4**: Thuanny - Desenvolvedor Front-end & QA (Interface UI/UX, Testes e Documentação)
-* **Integrante 4**: Matheus - Desenvolvedor Front-end & QA (Interface UI/UX, Testes e Documentação)
+* **Integrante 2**: Italo José Cavalcante da Silva - Desenvolvedor Back-end (Lógica de Negócio e APIs)
+* **Integrante 3**: Fredson Arthur da Silva Gomes - Desenvolvedor Back-end (Persistência de Dados e Segurança)
+* **Integrante 4**: Thuanny Helen de Souza França - Desenvolvedor Front-end & QA (Interface UI/UX, Testes e Documentação)
+* **Integrante 4**: Matheus Tenório de Farias - Desenvolvedor Front-end & QA (Interface UI/UX, Testes e Documentação)
 
 ---
 
