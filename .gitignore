@@ -1,0 +1,9 @@
+.idea/
+backend/target/
+*.log
+.env
+/prototipo-baixa-fidelidade/
+/docs/
+!/docs/
+/docs/*
+!/docs/guia-estudos-implementacao-equipe.md
