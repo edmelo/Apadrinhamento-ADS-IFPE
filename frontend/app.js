@@ -140,7 +140,10 @@ function meetingActions(m){
 
 function renderSchedule(){
   const schedule=document.getElementById('schedule');const selected=state.selectedDate;
-  const meetings=selected?state.meetings.filter(m=>localDate(meetingStart(m))===selected).sort((a,b)=>meetingStart(a)-meetingStart(b)):upcomingMeetings();
+  // o problema e que essa linha de codigo pega ate os horaros cancelados;
+  //const meetings=selected?state.meetings.filter(m=>localDate(meetingStart(m))===selected).sort((a,b)=>meetingStart(a)-meetingStart(b)):upcomingMeetings();
+  //agora eu escondo os cancelados e concluidos;
+  const meetings=selected?state.meetings.filter(m=>localDate(meetingStart(m))===selected&&m.status!=='CANCELADO'&&m.status!=='CONCLUIDO').sort((a,b)=>meetingStart(a)-meetingStart(b)):upcomingMeetings();
   const empty=selected?'Nenhum encontro neste dia.':state.user.role==='PADRINHO'?'Nenhum encontro agendado. Use “Novo encontro” para convidar seu afilhado.':'Nenhum encontro agendado. Seu padrinho enviará um convite por aqui.';
   schedule.innerHTML=`<p class="eyebrow">${selected?escapeHtml(longDate(parseLocalDate(selected)).toUpperCase()):'SEUS COMPROMISSOS'}</p><h2>${selected?'Encontros do dia':'Próximos encontros'}</h2>${selected?'<button class="text-button" data-clear-date>Ver todos os próximos encontros <i data-icon="arrow"></i></button>':''}`+(meetings.length?meetings.map(m=>{const start=meetingStart(m),who=counterpart(m);return `<article class="event${['CANCELADO','CONCLUIDO'].includes(m.status)?' muted-event':''}"><span class="time">${timeOf(start)}</span><div><span class="event-type">${escapeHtml(meetingLabels[m.status]||m.status).toUpperCase()}</span><h3>${escapeHtml(m.title)}</h3><p>${escapeHtml(longDate(start))} · ${timeOf(start)}–${timeOf(meetingEnd(m))}${who?` · com ${escapeHtml(who)}`:''} · ${escapeHtml(m.format||'A combinar')}</p>${meetingActions(m)}</div></article>`}).join(''):`<div class="card empty-state">${empty}</div>`);
   renderIcons(schedule);
@@ -281,12 +284,41 @@ function helpContent(){
 
 function modal(kind,context={}){
   let html='';
+  // if(kind==='encontro'){
+  //   const active=state.mentorships.filter(m=>m.status==='ATIVO');
+  //   if(state.user.role!=='PADRINHO')html='<h2>Agendamento restrito</h2><p>Somente padrinhos podem agendar encontros. Quando seu padrinho enviar um convite, ele aparecerá na agenda e nas notificações para você confirmar.</p>';
+  //   else if(!active.length)html='<h2>Agendar encontro</h2><p>Você precisa ter ao menos um afilhado com vínculo ativo para agendar um encontro.</p><button class="primary" data-view="solicitacoes">Ver solicitações</button>';
+  //   else{const tomorrow=new Date(Date.now()+86400000);html=`<h2>Agendar encontro</h2><p>Proponha um horário; seu afilhado receberá o convite para confirmar.</p><form data-modal-form="encontro"><label>Afilhado<select name="mentorshipId" required>${active.map(m=>`<option value="${m.id}"${String(m.id)===String(context.mentorship)?' selected':''}>${escapeHtml(m.godchild.name)}</option>`).join('')}</select></label><label>Data<input name="date" type="date" min="${localDate(new Date())}" value="${state.selectedDate&&state.selectedDate>=localDate(new Date())?state.selectedDate:localDate(tomorrow)}" required></label><label>Horário<input name="time" type="time" value="14:00" required></label><label>Duração<select name="durationMinutes"><option value="30">30 minutos</option><option value="45" selected>45 minutos</option><option value="60">1 hora</option><option value="90">1h30</option></select></label><label>Assunto<input name="title" placeholder="Ex.: dúvidas sobre Lógica" required maxlength="255"></label><label>Formato<select name="format"><option>Videochamada</option><option>Presencial</option></select></label><button class="primary">Enviar convite</button></form>`}
+  // }
   if(kind==='encontro'){
     const active=state.mentorships.filter(m=>m.status==='ATIVO');
-    if(state.user.role!=='PADRINHO')html='<h2>Agendamento restrito</h2><p>Somente padrinhos podem agendar encontros. Quando seu padrinho enviar um convite, ele aparecerá na agenda e nas notificações para você confirmar.</p>';
-    else if(!active.length)html='<h2>Agendar encontro</h2><p>Você precisa ter ao menos um afilhado com vínculo ativo para agendar um encontro.</p><button class="primary" data-view="solicitacoes">Ver solicitações</button>';
-    else{const tomorrow=new Date(Date.now()+86400000);html=`<h2>Agendar encontro</h2><p>Proponha um horário; seu afilhado receberá o convite para confirmar.</p><form data-modal-form="encontro"><label>Afilhado<select name="mentorshipId" required>${active.map(m=>`<option value="${m.id}"${String(m.id)===String(context.mentorship)?' selected':''}>${escapeHtml(m.godchild.name)}</option>`).join('')}</select></label><label>Data<input name="date" type="date" min="${localDate(new Date())}" value="${state.selectedDate&&state.selectedDate>=localDate(new Date())?state.selectedDate:localDate(tomorrow)}" required></label><label>Horário<input name="time" type="time" value="14:00" required></label><label>Duração<select name="durationMinutes"><option value="30">30 minutos</option><option value="45" selected>45 minutos</option><option value="60">1 hora</option><option value="90">1h30</option></select></label><label>Assunto<input name="title" placeholder="Ex.: dúvidas sobre Lógica" required maxlength="255"></label><label>Formato<select name="format"><option>Videochamada</option><option>Presencial</option></select></label><button class="primary">Enviar convite</button></form>`}
-  }
+    if(state.user.role!=='PADRINHO'){
+        html='<h2>Agendamento restrito</h2><p>Somente padrinhos podem agendar encontros. Quando seu padrinho enviar um convite, ele aparecerá na agenda e nas notificações para você confirmar.</p>';
+    }
+    else if(!active.length){
+        html='<h2>Agendar encontro</h2><p>Você precisa ter ao menos um afilhado com vínculo ativo para agendar um encontro.</p><button class="primary" data-view="solicitacoes">Ver solicitações</button>';
+    }
+    else{
+        const tomorrow=new Date(Date.now()+86400000);
+        html=`<h2>Agendar encontro</h2><p>Proponha um horário; seu afilhado receberá o convite para confirmar.</p>
+        <form data-modal-form="encontro">
+            <label>Afilhado<select name="mentorshipId" required>
+                ${active.map(m=>`<option value="${m.id}"${String(m.id)===String(context.mentorship)?' selected':''}>${escapeHtml(m.godchild.name)}</option>`).join('')}
+            </select></label>
+            <label>Data<input name="date" type="date" min="${localDate(new Date())}" value="${state.selectedDate&&state.selectedDate>=localDate(new Date())?state.selectedDate:localDate(tomorrow)}" required></label>
+            <label>Horário<input name="time" type="time" value="14:00" required></label>
+            <label>Duração<select name="durationMinutes">
+                <option value="30">30 minutos</option>
+                <option value="45" selected>45 minutos</option>
+                <option value="60">1 hora</option>
+                <option value="90">1h30</option>
+            </select></label>
+            <label>Assunto<input name="title" placeholder="Ex.: dúvidas sobre Lógica" required maxlength="255"></label>
+            <label>Formato<select name="format"><option>Videochamada</option><option>Presencial</option></select></label>
+            <button class="primary">Enviar convite</button>
+        </form>`;
+    }
+}
   if(kind==='pergunta')html='<h2>Fazer uma pergunta</h2><p>A comunidade está aqui para ajudar.</p><form data-modal-form="pergunta"><label>Título<input name="title" required maxlength="255"></label><label>Categoria<select name="category"><option>Lógica de programação</option><option>Rotina acadêmica</option><option>Professores e disciplinas</option><option>Provas e avaliações</option><option>Estágio</option><option>Carreira</option><option>Vida no campus</option><option>Organização</option></select></label><label>Detalhes<textarea name="content" required maxlength="3000"></textarea></label><button class="primary">Publicar pergunta</button></form>';
   if(kind==='dica')html=state.user.role==='PADRINHO'?'<h2>Compartilhar uma dica</h2><p>Ajude quem está começando agora.</p><form data-modal-form="dica"><label>Título<input name="title" required maxlength="255"></label><label>Categoria<input name="category" value="Experiência acadêmica" maxlength="255"></label><label>Conteúdo<textarea name="content" required maxlength="5000"></textarea></label><button class="primary">Enviar dica</button></form>':'<h2>Publicação restrita</h2><p>Somente padrinhos podem compartilhar dicas no mural. Você pode ler todas as dicas publicadas.</p>';
   if(kind==='resposta')html=`<h2>Responder pergunta</h2><p>Compartilhe uma resposta respeitosa e objetiva.</p><form data-modal-form="resposta"><input type="hidden" name="questionId" value="${context.questionId}"><label>Resposta<textarea name="content" required maxlength="3000"></textarea></label><button class="primary">Publicar resposta</button></form>`;
@@ -295,16 +327,54 @@ function modal(kind,context={}){
   showModal(html);
 }
 
+// async function submitModal(form){
+//   const data=Object.fromEntries(new FormData(form));const kind=form.dataset.modalForm;
+//   if(kind==='encontro'){const startsAt=`${data.date}T${data.time}:00`;if(new Date(startsAt)<=new Date())throw new Error('Escolha uma data e horário no futuro');await api('/meetings',{method:'POST',body:JSON.stringify({mentorshipId:Number(data.mentorshipId),title:data.title,startsAt,durationMinutes:Number(data.durationMinutes),format:data.format})});state.selectedDate=data.date}
+//   if(kind==='pergunta')await api('/questions',{method:'POST',body:JSON.stringify(data)});
+//   if(kind==='dica')await api('/tips',{method:'POST',body:JSON.stringify(data)});
+//   if(kind==='resposta')await api(`/questions/${data.questionId}/answers`,{method:'POST',body:JSON.stringify({content:data.content})});
+//   if(kind==='avaliacao'){if(!data.mentorshipId)throw new Error('Você ainda não possui vínculo ativo');await api('/reviews',{method:'POST',body:JSON.stringify({mentorshipId:Number(data.mentorshipId),rating:Number(data.rating),comment:data.comment})});}
+//   closeModal();toast(kind==='encontro'?'Convite enviado! O afilhado será notificado.':'Operação realizada com sucesso!');await loadData();
+//   if(kind==='encontro'){const d=parseLocalDate(data.date);state.calendar={year:d.getFullYear(),month:d.getMonth()};renderAgenda()}
+//   if(kind==='resposta')await openTopic(data.questionId);
+// }
 async function submitModal(form){
-  const data=Object.fromEntries(new FormData(form));const kind=form.dataset.modalForm;
-  if(kind==='encontro'){const startsAt=`${data.date}T${data.time}:00`;if(new Date(startsAt)<=new Date())throw new Error('Escolha uma data e horário no futuro');await api('/meetings',{method:'POST',body:JSON.stringify({mentorshipId:Number(data.mentorshipId),title:data.title,startsAt,durationMinutes:Number(data.durationMinutes),format:data.format})});state.selectedDate=data.date}
-  if(kind==='pergunta')await api('/questions',{method:'POST',body:JSON.stringify(data)});
-  if(kind==='dica')await api('/tips',{method:'POST',body:JSON.stringify(data)});
-  if(kind==='resposta')await api(`/questions/${data.questionId}/answers`,{method:'POST',body:JSON.stringify({content:data.content})});
-  if(kind==='avaliacao'){if(!data.mentorshipId)throw new Error('Você ainda não possui vínculo ativo');await api('/reviews',{method:'POST',body:JSON.stringify({mentorshipId:Number(data.mentorshipId),rating:Number(data.rating),comment:data.comment})});}
-  closeModal();toast(kind==='encontro'?'Convite enviado! O afilhado será notificado.':'Operação realizada com sucesso!');await loadData();
-  if(kind==='encontro'){const d=parseLocalDate(data.date);state.calendar={year:d.getFullYear(),month:d.getMonth()};renderAgenda()}
-  if(kind==='resposta')await openTopic(data.questionId);
+    const data=Object.fromEntries(new FormData(form));
+    const kind=form.dataset.modalForm;
+
+    if(kind==='encontro'){
+        const startsAt=`${data.date}T${data.time}:00`;
+        if(new Date(startsAt)<=new Date()) throw new Error('Escolha uma data e horário no futuro');
+        await api('/meetings',{method:'POST',body:JSON.stringify({
+            mentorshipId:Number(data.mentorshipId),
+            title:data.title,
+            startsAt,
+            durationMinutes:Number(data.durationMinutes),
+            format:data.format
+        })});
+        state.selectedDate=data.date;
+    }
+    if(kind==='pergunta') await api('/questions',{method:'POST',body:JSON.stringify(data)});
+    if(kind==='dica') await api('/tips',{method:'POST',body:JSON.stringify(data)});
+    if(kind==='resposta') await api(`/questions/${data.questionId}/answers`,{method:'POST',body:JSON.stringify({content:data.content})});
+    if(kind==='avaliacao'){
+        if(!data.mentorshipId) throw new Error('Você ainda não possui vínculo ativo');
+        await api('/reviews',{method:'POST',body:JSON.stringify({
+            mentorshipId:Number(data.mentorshipId),
+            rating:Number(data.rating),
+            comment:data.comment
+        })});
+    }
+
+    closeModal();
+    toast(kind==='encontro'?'Convite enviado! O afilhado será notificado.':'Operação realizada com sucesso!');
+    await loadData();
+    if(kind==='encontro'){
+        const d=parseLocalDate(data.date);
+        state.calendar={year:d.getFullYear(),month:d.getMonth()};
+        renderAgenda();
+    }
+    if(kind==='resposta') await openTopic(data.questionId);
 }
 
 async function run(action,success){try{await action();if(success)toast(success);await loadData()}catch(err){toast(err.message)}}

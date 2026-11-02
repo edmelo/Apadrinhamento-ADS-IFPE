@@ -9,8 +9,25 @@ import java.util.*;
 
 @RestControllerAdvice
 public class ApiExceptionHandler {
-    @ExceptionHandler(IllegalArgumentException.class) ResponseEntity<Map<String,Object>> badRequest(IllegalArgumentException e){return response(HttpStatus.BAD_REQUEST,e.getMessage());}
-    @ExceptionHandler(AccessDeniedException.class) ResponseEntity<Map<String,Object>> forbidden(AccessDeniedException e){return response(HttpStatus.FORBIDDEN,"Seu perfil não tem permissão para esta ação");}
-    @ExceptionHandler(MethodArgumentNotValidException.class) ResponseEntity<Map<String,Object>> validation(MethodArgumentNotValidException e){var message=e.getBindingResult().getFieldErrors().stream().findFirst().map(f->f.getField()+": "+f.getDefaultMessage()).orElse("Dados inválidos");return response(HttpStatus.BAD_REQUEST,message);}
-    private ResponseEntity<Map<String,Object>> response(HttpStatus status,String message){return ResponseEntity.status(status).body(Map.of("timestamp",Instant.now().toString(),"status",status.value(),"error",message));}
+    @ExceptionHandler(IllegalArgumentException.class)
+    ResponseEntity<Map<String, Object>> badRequest(IllegalArgumentException e) {
+        return response(HttpStatus.BAD_REQUEST, e.getMessage());
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    ResponseEntity<Map<String, Object>> forbidden(AccessDeniedException e) {
+        return response(HttpStatus.FORBIDDEN, "Seu perfil não tem permissão para esta ação");
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    ResponseEntity<Map<String, Object>> validation(MethodArgumentNotValidException e) {
+        var message = e.getBindingResult().getFieldErrors().stream().findFirst()
+                .map(f -> f.getField() + ": " + f.getDefaultMessage()).orElse("Dados inválidos");
+        return response(HttpStatus.BAD_REQUEST, message);
+    }
+
+    private ResponseEntity<Map<String, Object>> response(HttpStatus status, String message) {
+        return ResponseEntity.status(status)
+                .body(Map.of("timestamp", Instant.now().toString(), "status", status.value(), "error", message));
+    }
 }
