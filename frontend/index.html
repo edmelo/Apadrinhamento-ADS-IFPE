@@ -41,48 +41,358 @@
       <nav>
         <button class="nav-item active" data-view="inicio"><i data-icon="home"></i>Início</button>
         <button class="nav-item" data-roles="AFILHADO" data-view="encontrar" hidden><i data-icon="users"></i>Encontrar padrinho</button>
-        <button class="nav-item" data-roles="PADRINHO" data-view="solicitacoes" hidden><i data-icon="heart"></i>Solicitações</button>
+        <button class="nav-item" data-roles="PADRINHO" data-view="solicitacoes" hidden><i data-icon="heart"></i>Convites e Vínculos</button>
         <button class="nav-item" data-view="agenda"><i data-icon="calendar"></i>Agenda</button>
         <button class="nav-item" data-view="forum"><i data-icon="message"></i>Fórum</button>
-        <button class="nav-item" data-view="mural"><i data-icon="bookmark"></i>Mural de dicas</button>
+        <button class="nav-item" data-view="mural"><i data-icon="bookmark"></i>FAQ &amp; Dúvidas</button>
       </nav>
       <div class="sidebar-bottom">
         <button class="nav-item" data-roles="ADMIN" data-view="admin" hidden><i data-icon="chart"></i>Administração</button>
         <button class="nav-item logout-button" data-logout><i data-icon="x"></i>Sair</button>
-        <button class="profile-card" data-view="perfil"><span class="avatar avatar-green">AS</span><span><strong>Ana Souza</strong><small>Afilhada · 1º período</small></span><i data-icon="more"></i></button>
+        <button class="profile-card" data-view="perfil"><span class="avatar avatar-green" id="sidebar-avatar">AS</span><span><strong>Ana Souza</strong><small>Afilhada · 1º período</small></span><i data-icon="more"></i></button>
       </div>
     </aside>
 
     <main class="main-content">
-      <header class="topbar"><button class="mobile-menu" aria-label="Abrir menu"><i data-icon="menu"></i></button><div class="breadcrumb">Bem-vinda de volta, <strong>Ana!</strong></div><div class="top-actions"><div class="notifications" id="notifications"><button class="icon-button" id="notifications-button" aria-label="Notificações" aria-haspopup="true" aria-expanded="false" aria-controls="notifications-panel"><i data-icon="bell"></i><b hidden></b></button><section class="notifications-panel" id="notifications-panel" aria-label="Notificações" hidden><header><strong>Notificações</strong><button class="text-button" data-notifications-read>Marcar todas como lidas</button></header><div id="notifications-list"></div></section></div><button class="help-button" id="help-button" aria-label="Central de ajuda" title="Central de ajuda">?</button></div></header>
+      <header class="topbar">
+        <button class="mobile-menu" aria-label="Abrir menu"><i data-icon="menu"></i></button>
+        <div class="breadcrumb">Bem-vinda de volta, <strong>Ana!</strong></div>
+        <div class="top-actions">
+          <div class="notifications" id="notifications">
+            <button class="icon-button" id="notifications-button" aria-label="Notificações" aria-haspopup="true" aria-expanded="false" aria-controls="notifications-panel"><i data-icon="bell"></i><b hidden></b></button>
+            <section class="notifications-panel" id="notifications-panel" aria-label="Notificações" hidden>
+              <header>
+                <strong>Notificações</strong>
+                <div class="notif-header-actions">
+                  <button class="text-button" data-notifications-read>Marcar lidas</button>
+                  <button class="text-button" data-notifications-archive-all>Arquivar todas</button>
+                </div>
+              </header>
+              <div id="notifications-list"></div>
+            </section>
+          </div>
+          <button class="help-button" id="help-button" aria-label="Central de ajuda" title="Central de ajuda">?</button>
+        </div>
+      </header>
 
       <section class="view active" id="inicio">
-        <div class="page-heading"><div><p class="eyebrow">SEU ESPAÇO</p><h1>Uma jornada melhor começa com uma boa companhia.</h1><p class="subtitle">Veja o que está acontecendo na sua semana.</p></div><button class="primary" data-roles="PADRINHO" data-open-modal="encontro" hidden><i data-icon="plus"></i>Agendar encontro</button></div>
-        <div class="welcome-banner" id="profile-banner" hidden><div><span class="wave">👋</span><div><h2>Você tem uma nova conquista!</h2><p>Complete seu perfil para facilitar a conexão com seu padrinho.</p></div></div><button class="white-button" data-view="perfil">Completar perfil <i data-icon="arrow"></i></button></div>
+        <div class="page-heading">
+          <div><p class="eyebrow">SEU ESPAÇO</p><h1>Uma jornada melhor começa com uma boa companhia.</h1><p class="subtitle">Veja o que está acontecendo na sua semana.</p></div>
+          <div class="heading-actions">
+            <button class="primary" data-roles="PADRINHO" data-open-modal="encontro" hidden><i data-icon="plus"></i>Agendar encontro</button>
+            <button class="primary" data-roles="AFILHADO" data-open-modal="encontro" hidden><i data-icon="calendar"></i>Solicitar encontro</button>
+          </div>
+        </div>
+        <div class="welcome-banner" id="profile-banner" hidden><div><span class="wave">👋</span><div><h2>Você tem uma nova conquista!</h2><p>Complete seu perfil com seus dias e horários específicos para facilitar a conexão com seu padrinho.</p></div></div><button class="white-button" data-view="perfil">Completar perfil <i data-icon="arrow"></i></button></div>
         <div class="dashboard-grid">
-          <article class="card mentor-summary" data-roles="AFILHADO"><div class="card-heading"><div><p class="eyebrow">SEU PADRINHO</p><h2>João Mendes</h2><p>5º período · Desenvolvimento de Sistemas</p></div><span class="status"><b></b>Disponível</span></div><div class="mentor-footer"><div class="avatar avatar-purple large">JM</div><span>“Pode me chamar sempre que precisar!”</span><button class="text-button" data-open-modal="avaliacao">Avaliar</button><button class="round-button" data-toast="Mensagens serão integradas em uma etapa futura"><i data-icon="send"></i></button></div></article>
+          <article class="card mentor-summary" data-roles="AFILHADO">
+            <div class="card-heading">
+              <div><p class="eyebrow">SEU PADRINHO</p><h2>João Mendes</h2><p>5º período · Desenvolvimento de Sistemas</p></div>
+              <span class="status"><b></b>Disponível</span>
+            </div>
+            <div class="mentor-availability-box" id="home-mentor-availability"></div>
+            <div class="mentor-footer">
+              <div class="avatar avatar-purple large" id="home-mentor-avatar">JM</div>
+              <span id="home-mentor-bio">“Pode me chamar sempre que precisar!”</span>
+              <div class="mentor-footer-actions">
+                <button class="text-button" data-open-modal="encontro" id="home-request-meeting-btn">Solicitar encontro</button>
+                <button class="text-button" data-open-modal="avaliacao">Avaliar</button>
+                <button class="round-button" id="home-chat-button" data-open-chat="" title="Enviar mensagem"><i data-icon="send"></i></button>
+              </div>
+            </div>
+          </article>
           <article class="card meeting-card" id="next-meeting"><p class="eyebrow">PRÓXIMO ENCONTRO</p><div><h2>Carregando…</h2></div></article>
-          <article class="card checklist" data-roles="AFILHADO"><div class="card-heading"><div><p class="eyebrow">PRIMEIROS PASSOS</p><h2>Seu progresso</h2></div><strong>2/4</strong></div><div class="progress"><span></span></div><label class="checked"><input type="checkbox" checked /> Conhecer seu padrinho</label><label class="checked"><input type="checkbox" checked /> Acessar o guia do campus</label><label><input type="checkbox" /> Participar do primeiro encontro</label><label><input type="checkbox" /> Fazer sua primeira pergunta</label></article>
+          <article class="card checklist" id="onboarding-checklist" data-roles="AFILHADO">
+            <div class="card-heading">
+              <div><p class="eyebrow">PRIMEIROS PASSOS</p><h2>Seu progresso</h2></div>
+              <strong id="checklist-counter">0/4</strong>
+            </div>
+            <div class="progress"><span id="checklist-progress-bar"></span></div>
+            <div id="checklist-items" class="checklist-items"></div>
+            <div id="checklist-footer" class="checklist-footer"></div>
+          </article>
         </div>
         <div class="content-columns">
           <section class="card activity"><div class="card-heading"><div><p class="eyebrow">ATUALIZAÇÕES</p><h2>Atividade recente</h2></div><button class="text-button" data-view="forum">Ver tudo <i data-icon="arrow"></i></button></div><div id="activity-list"></div></section>
-          <section class="card quick-help"><p class="eyebrow">PRECISA DE UMA MÃO?</p><h2>Encontre respostas rápidas</h2><p>Explore dúvidas e dicas compartilhadas por quem já passou pelo começo do curso.</p><button class="outline" data-view="forum">Ir para o fórum <i data-icon="arrow"></i></button><div class="scribble">✦</div></section>
+          <section class="card quick-help"><p class="eyebrow">PRECISA DE UMA MÃO?</p><h2>Dúvidas frequentes (FAQ) e Fórum</h2><p>Explore o FAQ categorizado ou converse com quem já passou pelo começo do curso no fórum.</p><div class="quick-help-actions"><button class="outline" data-view="mural">Ver FAQ <i data-icon="arrow"></i></button><button class="outline" data-view="forum">Ir para o fórum <i data-icon="arrow"></i></button></div><div class="scribble">✦</div></section>
         </div>
       </section>
 
-      <section class="view" id="encontrar" data-roles="AFILHADO" hidden><div class="page-heading"><div><p class="eyebrow">CONEXÕES</p><h1>Encontre o padrinho ideal para você.</h1><p class="subtitle">Escolha alguém que combine com seus interesses e disponibilidade.</p></div></div><div class="filter-bar"><button class="filter active">Todos</button><button class="filter">Lógica e programação</button><button class="filter">Carreira</button><button class="filter">Rotina acadêmica</button><button class="filter"><i data-icon="sliders"></i> Filtros</button></div><div class="mentor-grid" id="mentor-grid"></div></section>
+      <section class="view" id="encontrar" data-roles="AFILHADO" hidden>
+        <div class="page-heading">
+          <div><p class="eyebrow">CONEXÕES</p><h1>Encontre o padrinho ideal para você.</h1><p class="subtitle">Filtre por assunto, período acadêmico, dia da semana e horário disponível.</p></div>
+        </div>
+        <div class="card mentor-filters-panel">
+          <div class="mentor-filters-grid">
+            <label class="filter-field">
+              <span>Assunto ou interesse</span>
+              <div class="search-input-wrap">
+                <i data-icon="search"></i>
+                <input type="search" id="mentor-filter-subject" placeholder="Ex.: Lógica, Java, Python, Carreira..." />
+              </div>
+            </label>
+            <label class="filter-field">
+              <span>Período</span>
+              <select id="mentor-filter-period">
+                <option value="">Todos os períodos</option>
+                <option value="2º período">2º período</option>
+                <option value="3º período">3º período</option>
+                <option value="4º período">4º período</option>
+                <option value="5º período">5º período</option>
+                <option value="6º período">6º período</option>
+              </select>
+            </label>
+            <label class="filter-field">
+              <span>Dia disponível</span>
+              <select id="mentor-filter-day">
+                <option value="">Todos os dias</option>
+                <option value="Segunda-feira">Segunda-feira</option>
+                <option value="Terça-feira">Terça-feira</option>
+                <option value="Quarta-feira">Quarta-feira</option>
+                <option value="Quinta-feira">Quinta-feira</option>
+                <option value="Sexta-feira">Sexta-feira</option>
+                <option value="Sábado">Sábado</option>
+              </select>
+            </label>
+            <label class="filter-field">
+              <span>Horário disponível</span>
+              <select id="mentor-filter-time">
+                <option value="">Todos os horários</option>
+                <option value="manha">Manhã (08:00 às 12:00)</option>
+                <option value="tarde">Tarde (12:00 às 18:00)</option>
+                <option value="noite">Noite (18:00 às 22:00)</option>
+                <option value="09:00">09:00</option>
+                <option value="10:00">10:00</option>
+                <option value="14:00">14:00</option>
+                <option value="15:00">15:00</option>
+                <option value="16:00">16:00</option>
+                <option value="18:30">18:30</option>
+              </select>
+            </label>
+          </div>
+          <div class="filter-bar">
+            <button type="button" class="filter active" data-mentor-quick="">Todos</button>
+            <button type="button" class="filter" data-mentor-quick="Lógica">Lógica e programação</button>
+            <button type="button" class="filter" data-mentor-quick="Java">Java e Projetos</button>
+            <button type="button" class="filter" data-mentor-quick="Python">Python e Dados</button>
+            <button type="button" class="filter" data-mentor-quick="Carreira">Carreira e Estágio</button>
+            <button type="button" class="filter" data-mentor-quick="Rotina">Rotina acadêmica</button>
+            <button type="button" class="text-button clear-mentor-filters" id="clear-mentor-filters">Limpar filtros</button>
+          </div>
+        </div>
+        <div class="mentor-grid" id="mentor-grid"></div>
+      </section>
 
-      <section class="view" id="solicitacoes" data-roles="PADRINHO" hidden><div class="page-heading"><div><p class="eyebrow">APADRINHAMENTO</p><h1>Solicitações e acompanhamentos.</h1><p class="subtitle">Avalie novos pedidos e acompanhe seus afilhados.</p></div></div><div class="request-list" id="request-list"></div></section>
+      <section class="view" id="solicitacoes" data-roles="PADRINHO" hidden>
+        <div class="page-heading">
+          <div><p class="eyebrow">APADRINHAMENTO</p><h1>Convites, solicitações e acompanhamentos.</h1><p class="subtitle">Avalie novos pedidos, agende encontros e troque mensagens com seus afilhados após confirmação.</p></div>
+          <button class="outline" data-view="agenda"><i data-icon="calendar"></i>Gerenciar minha agenda</button>
+        </div>
+        <div class="request-list" id="request-list"></div>
+      </section>
 
-      <section class="view" id="agenda"><div class="page-heading"><div><p class="eyebrow">AGENDA</p><h1>Organize seus encontros.</h1><p class="subtitle">Não deixe nenhuma conversa importante passar.</p></div><div class="heading-actions"><button class="outline" data-export-ics><i data-icon="calendar"></i>Exportar agenda (.ics)</button><button class="primary" data-roles="PADRINHO" data-open-modal="encontro" hidden><i data-icon="plus"></i>Novo encontro</button></div></div><div class="agenda-layout"><section class="card calendar"><div class="calendar-head"><button class="icon-button" data-calendar="-1" aria-label="Mês anterior">‹</button><div class="calendar-title"><h2 id="calendar-title"></h2><button class="text-button" data-calendar="0">Hoje</button></div><button class="icon-button" data-calendar="1" aria-label="Próximo mês">›</button></div><div class="weekdays"><span>DOM</span><span>SEG</span><span>TER</span><span>QUA</span><span>QUI</span><span>SEX</span><span>SÁB</span></div><div class="days" id="calendar-days"></div><p class="calendar-sync" id="calendar-sync"></p></section><section class="schedule" id="schedule"></section></div></section>
+      <section class="view" id="agenda">
+        <div class="page-heading">
+          <div><p class="eyebrow">AGENDA E AGENDAMENTOS</p><h1>Organize seus encontros e horários.</h1><p class="subtitle">Acompanhe convites, confirme presenças, evite conflitos de horário e converse após confirmar.</p></div>
+          <div class="heading-actions">
+            <button class="outline" data-export-ics><i data-icon="calendar"></i>Exportar agenda (.ics)</button>
+            <button class="primary" data-roles="PADRINHO" data-open-modal="encontro" hidden><i data-icon="plus"></i>Novo encontro</button>
+            <button class="primary" data-roles="AFILHADO" data-open-modal="encontro" hidden><i data-icon="plus"></i>Solicitar encontro</button>
+          </div>
+        </div>
 
-      <section class="view" id="forum"><div class="page-heading"><div><p class="eyebrow">FÓRUM COLABORATIVO</p><h1>Dúvidas compartilhadas, caminhos mais claros.</h1><p class="subtitle">Pergunte, responda e aprenda com a comunidade ADS.</p></div><button class="primary" data-open-modal="pergunta"><i data-icon="plus"></i>Fazer pergunta</button></div><div class="forum-layout"><div><div class="search"><i data-icon="search"></i><input type="search" id="forum-search" placeholder="Buscar dúvidas, assuntos ou palavras-chave" aria-label="Buscar no fórum" /></div><div class="topic-list" id="topic-list"></div></div><aside class="forum-side"><section class="card"><p class="eyebrow">TÓPICOS POPULARES</p><button class="topic-tag" data-forum-filter="lógica"># lógica de programação</button><button class="topic-tag" data-forum-filter="professor"># professores</button><button class="topic-tag" data-forum-filter="estágio"># estágio</button><button class="topic-tag" data-forum-filter="prova"># provas e avaliações</button><button class="topic-tag" data-forum-filter="campus"># vida no campus</button></section><section class="card author-callout"><span class="avatar avatar-orange">MS</span><h3>Compartilhe o que você sabe</h3><p>Sua experiência pode ser a resposta que alguém precisa.</p><button class="outline" data-open-modal="pergunta">Criar pergunta</button></section></aside></div></section>
+        <section class="card mentor-availability-manager" id="mentor-agenda-manager" data-roles="PADRINHO" hidden>
+          <div class="card-heading">
+            <div>
+              <p class="eyebrow">GESTÃO DE AGENDA DO PADRINHO</p>
+              <h2>Seus dias e horários disponíveis para apadrinhamento</h2>
+              <p>Cadastre os dias da semana e horários específicos em que você pode atender seus afilhados.</p>
+            </div>
+          </div>
+          <div class="availability-slots-list" id="agenda-slots-list"></div>
+          <div class="availability-builder" id="agenda-slot-builder">
+            <label>Dia da semana
+              <select id="agenda-slot-day">
+                <option value="Segunda-feira">Segunda-feira</option>
+                <option value="Terça-feira">Terça-feira</option>
+                <option value="Quarta-feira">Quarta-feira</option>
+                <option value="Quinta-feira">Quinta-feira</option>
+                <option value="Sexta-feira">Sexta-feira</option>
+                <option value="Sábado">Sábado</option>
+              </select>
+            </label>
+            <label>Início
+              <input type="time" id="agenda-slot-start" value="14:00" />
+            </label>
+            <label>Término
+              <input type="time" id="agenda-slot-end" value="16:00" />
+            </label>
+            <button type="button" class="primary" id="agenda-add-slot-btn"><i data-icon="plus"></i>Adicionar disponibilidade</button>
+          </div>
+        </section>
 
-      <section class="view" id="mural"><div class="page-heading"><div><p class="eyebrow">MURAL DE DICAS</p><h1>O que eu gostaria de ter sabido no início.</h1><p class="subtitle">Guias e recomendações feitos por estudantes, para estudantes.</p></div><button class="primary" data-roles="PADRINHO" data-open-modal="dica" hidden><i data-icon="plus"></i>Compartilhar dica</button></div><div class="featured-tip"><div><span class="tip-tag">DESTAQUE DA SEMANA</span><h2>Como sobreviver à primeira semana de ADS</h2><p>Um guia honesto sobre horários, laboratórios, professores e aquele frio na barriga do primeiro dia.</p><button class="white-button" data-toast="Guia aberto">Ler guia completo <i data-icon="arrow"></i></button></div><span class="big-emoji">🧭</span></div><div class="mural-grid" id="mural-grid"></div></section>
+        <div class="agenda-layout">
+          <section class="card calendar">
+            <div class="calendar-head"><button class="icon-button" data-calendar="-1" aria-label="Mês anterior">‹</button><div class="calendar-title"><h2 id="calendar-title"></h2><button class="text-button" data-calendar="0">Hoje</button></div><button class="icon-button" data-calendar="1" aria-label="Próximo mês">›</button></div>
+            <div class="weekdays"><span>DOM</span><span>SEG</span><span>TER</span><span>QUA</span><span>QUI</span><span>SEX</span><span>SÁB</span></div>
+            <div class="days" id="calendar-days"></div>
+            <p class="calendar-sync" id="calendar-sync"></p>
+          </section>
+          <section class="schedule" id="schedule"></section>
+        </div>
+      </section>
 
-      <section class="view" id="admin" data-roles="ADMIN" hidden><div class="page-heading"><div><p class="eyebrow">ADMINISTRAÇÃO</p><h1>Visão geral da comunidade.</h1><p class="subtitle">Acompanhe conexões, participação e pontos de atenção.</p></div><button class="primary" data-toast="Novo aviso criado"><i data-icon="plus"></i>Publicar aviso</button></div><div class="metrics"><article class="metric"><span class="metric-icon green"><i data-icon="users"></i></span><div><p>CALOUROS CADASTRADOS</p><strong>86</strong><small class="positive">↑ 12 nesta semana</small></div></article><article class="metric"><span class="metric-icon purple"><i data-icon="heart"></i></span><div><p>VÍNCULOS ATIVOS</p><strong>61</strong><small class="positive">71% dos calouros</small></div></article><article class="metric"><span class="metric-icon orange"><i data-icon="message"></i></span><div><p>PERGUNTAS RESPONDIDAS</p><strong>142</strong><small class="positive">↑ 18 esta semana</small></div></article><article class="metric"><span class="metric-icon blue"><i data-icon="clock"></i></span><div><p>AGUARDANDO MATCH</p><strong>08</strong><small>Requer atenção</small></div></article></div><div class="admin-grid"><section class="card"><div class="card-heading"><div><p class="eyebrow">PENDÊNCIAS</p><h2>Solicitações aguardando ação</h2></div><button class="text-button">Ver todas <i data-icon="arrow"></i></button></div><div class="table"><div class="table-row table-head"><span>ESTUDANTE</span><span>PERFIL</span><span>SITUAÇÃO</span><span></span></div><div class="table-row"><strong>Maria Clara</strong><span>Afilhada</span><span class="badge yellow">Sem padrinho</span><button class="small-button" data-toast="Match sugerido para Maria">Atribuir</button></div><div class="table-row"><strong>Diego Alves</strong><span>Padrinho</span><span class="badge blue">Validar perfil</span><button class="small-button" data-toast="Perfil de Diego aberto">Revisar</button></div><div class="table-row"><strong>Bianca Lima</strong><span>Afilhada</span><span class="badge yellow">Sem padrinho</span><button class="small-button" data-toast="Match sugerido para Bianca">Atribuir</button></div></div></section><section class="card admin-actions"><p class="eyebrow">GESTÃO RÁPIDA</p><button class="outline" data-toast="Gestão de usuários aberta"><i data-icon="users"></i>Gerenciar usuários</button><button class="outline" data-toast="Moderação do mural aberta"><i data-icon="bookmark"></i>Revisar mural e fórum</button><button class="outline" data-toast="Relatório gerado"><i data-icon="chart"></i>Relatório de mentorias</button></section></div></section>
+      <section class="view" id="forum">
+        <div class="page-heading">
+          <div><p class="eyebrow">FÓRUM COLABORATIVO</p><h1>Dúvidas compartilhadas, caminhos mais claros.</h1><p class="subtitle">Pergunte, responda, apoie colegas e construa conhecimento coletivo em ADS.</p></div>
+          <button class="primary" data-open-modal="pergunta"><i data-icon="plus"></i>Fazer pergunta</button>
+        </div>
+        <div class="forum-stats-banner" id="forum-stats-banner"></div>
+        <div class="forum-categories-bar" id="forum-categories-bar">
+          <button type="button" class="forum-cat-chip active" data-forum-category="">🌐 Todas as categorias</button>
+          <button type="button" class="forum-cat-chip" data-forum-category="Lógica de programação">💻 Lógica de programação</button>
+          <button type="button" class="forum-cat-chip" data-forum-category="Rotina acadêmica">📅 Rotina acadêmica</button>
+          <button type="button" class="forum-cat-chip" data-forum-category="Professores e disciplinas">🎓 Professores e disciplinas</button>
+          <button type="button" class="forum-cat-chip" data-forum-category="Provas e avaliações">📝 Provas e avaliações</button>
+          <button type="button" class="forum-cat-chip" data-forum-category="Estágio">🚀 Estágio</button>
+          <button type="button" class="forum-cat-chip" data-forum-category="Carreira">💼 Carreira</button>
+          <button type="button" class="forum-cat-chip" data-forum-category="Vida no campus">🏫 Vida no campus</button>
+          <button type="button" class="forum-cat-chip" data-forum-category="Organização">🗂️ Organização</button>
+        </div>
+        <div class="forum-layout">
+          <div>
+            <div class="forum-toolbar">
+              <div class="search"><i data-icon="search"></i><input type="search" id="forum-search" placeholder="Buscar dúvidas, assuntos, categorias ou autores..." aria-label="Buscar no fórum" /></div>
+              <div class="forum-status-tabs">
+                <button type="button" class="forum-tab active" data-forum-tab="all">Todas</button>
+                <button type="button" class="forum-tab" data-forum-tab="unanswered">Precisam de ajuda</button>
+                <button type="button" class="forum-tab" data-forum-tab="popular">Mais curtidas</button>
+                <button type="button" class="forum-tab" data-forum-tab="mine">Minhas dúvidas</button>
+              </div>
+            </div>
+            <div class="topic-list" id="topic-list"></div>
+          </div>
+          <aside class="forum-side">
+            <section class="card author-callout">
+              <span class="avatar avatar-orange">💡</span>
+              <h3>Sua resposta faz a diferença!</h3>
+              <p>Mesmo uma dica rápida pode destravar os estudos de um colega ingressante. Participe das discussões!</p>
+              <button class="primary" data-open-modal="pergunta"><i data-icon="plus"></i>Criar nova discussão</button>
+            </section>
+            <section class="card">
+              <p class="eyebrow">TAGS EM DESTAQUE</p>
+              <div class="forum-tag-cloud">
+                <button class="topic-tag" data-forum-filter="lógica"># lógica de programação</button>
+                <button class="topic-tag" data-forum-filter="faltas"># faltas e Q-Acadêmico</button>
+                <button class="topic-tag" data-forum-filter="estágio"># primeiro estágio</button>
+                <button class="topic-tag" data-forum-filter="prova"># provas e avaliações</button>
+                <button class="topic-tag" data-forum-filter="campus"># vida no campus</button>
+              </div>
+            </section>
+          </aside>
+        </div>
+      </section>
 
-      <section class="view" id="perfil"><div class="page-heading"><div><p class="eyebrow">MEU PERFIL</p><h1>Conte um pouco sobre você.</h1><p class="subtitle">Essas informações ajudam a tornar o apadrinhamento mais proveitoso.</p></div></div><form class="profile-form card" id="profile-form"><div class="profile-head"><span class="avatar avatar-green profile-avatar">AS</span><div><h2>Ana Souza</h2><p>ana.souza@discente.ifpe.edu.br</p></div><button type="button" class="outline">Alterar foto</button></div><div class="form-grid"><label>Nome completo<input value="Ana Souza" required /></label><label>Período<select><option>1º período</option><option>2º período</option></select></label><label>Interesses<input value="Lógica, front-end e organização" /></label><label>Disponibilidade<select><option>Tardes durante a semana</option><option>Manhãs durante a semana</option><option>Noites</option></select></label></div><label>O que você espera do apadrinhamento?<textarea>Quero me organizar melhor para o início do curso e conhecer mais sobre as disciplinas.</textarea></label><div class="form-actions"><button type="button" class="outline">Cancelar</button><button class="primary">Salvar alterações</button></div></form></section>
+      <section class="view" id="mural">
+        <div class="page-heading">
+          <div><p class="eyebrow">PERGUNTAS FREQUENTES (FAQ)</p><h1>Central de Dúvidas e Guia do Estudante ADS.</h1><p class="subtitle">Respostas diretas organizadas por categoria para as principais dúvidas de quem está no curso.</p></div>
+          <button class="primary" data-roles="PADRINHO" data-open-modal="dica" hidden><i data-icon="plus"></i>Adicionar item ao FAQ</button>
+        </div>
+        <div class="featured-tip faq-hero">
+          <div>
+            <span class="tip-tag">GUIA RÁPIDO · FAQ INTERATIVO</span>
+            <h2>Tudo o que você precisa saber nos primeiros períodos de ADS</h2>
+            <p>Navegue pelas categorias abaixo ou pesquise sua dúvida. Clique em qualquer pergunta para expandir a resposta completa elaborada por veteranos e padrinhos.</p>
+            <div class="faq-search-box">
+              <i data-icon="search"></i>
+              <input type="search" id="faq-search" placeholder="Pesquisar no FAQ (ex.: laboratórios, faltas, Q-Acadêmico, estágio, apadrinhamento)..." />
+            </div>
+          </div>
+          <span class="big-emoji">🧭</span>
+        </div>
+        <div class="faq-categories-bar" id="faq-categories-bar">
+          <button type="button" class="filter active" data-faq-cat="">Todas as categorias</button>
+          <button type="button" class="filter" data-faq-cat="Vida no campus">🏫 Vida no campus</button>
+          <button type="button" class="filter" data-faq-cat="Rotina acadêmica">📅 Rotina acadêmica</button>
+          <button type="button" class="filter" data-faq-cat="Estudos e programação">💻 Estudos e programação</button>
+          <button type="button" class="filter" data-faq-cat="Organização">🗂️ Organização</button>
+          <button type="button" class="filter" data-faq-cat="Estágio e carreira">💼 Estágio e carreira</button>
+          <button type="button" class="filter" data-faq-cat="Sobre o apadrinhamento">🤝 Sobre o apadrinhamento</button>
+        </div>
+        <div class="faq-list" id="mural-grid"></div>
+      </section>
+
+      <section class="view" id="admin" data-roles="ADMIN" hidden>
+        <div class="page-heading"><div><p class="eyebrow">ADMINISTRAÇÃO</p><h1>Visão geral da comunidade.</h1><p class="subtitle">Acompanhe conexões, participação e pontos de atenção.</p></div><button class="primary" data-toast="Novo aviso criado"><i data-icon="plus"></i>Publicar aviso</button></div>
+        <div class="metrics"><article class="metric"><span class="metric-icon green"><i data-icon="users"></i></span><div><p>CALOUROS CADASTRADOS</p><strong>86</strong><small class="positive">↑ 12 nesta semana</small></div></article><article class="metric"><span class="metric-icon purple"><i data-icon="heart"></i></span><div><p>VÍNCULOS ATIVOS</p><strong>61</strong><small class="positive">71% dos calouros</small></div></article><article class="metric"><span class="metric-icon orange"><i data-icon="message"></i></span><div><p>PERGUNTAS RESPONDIDAS</p><strong>142</strong><small class="positive">↑ 18 esta semana</small></div></article><article class="metric"><span class="metric-icon blue"><i data-icon="clock"></i></span><div><p>AGUARDANDO MATCH</p><strong>08</strong><small>Requer atenção</small></div></article></div>
+        <div class="admin-grid"><section class="card"><div class="card-heading"><div><p class="eyebrow">PENDÊNCIAS</p><h2>Solicitações aguardando ação</h2></div><button class="text-button">Ver todas <i data-icon="arrow"></i></button></div><div class="table"><div class="table-row table-head"><span>ESTUDANTE</span><span>PERFIL</span><span>SITUAÇÃO</span><span></span></div></div></section><section class="card admin-actions"><p class="eyebrow">GESTÃO RÁPIDA</p><button class="outline" data-toast="Gestão de usuários aberta"><i data-icon="users"></i>Gerenciar usuários</button><button class="outline" data-toast="Moderação do FAQ e fórum aberta"><i data-icon="bookmark"></i>Revisar FAQ e fórum</button><button class="outline" data-toast="Relatório gerado"><i data-icon="chart"></i>Relatório de mentorias</button></section></div>
+      </section>
+
+      <section class="view" id="perfil">
+        <div class="page-heading"><div><p class="eyebrow">MEU PERFIL</p><h1>Conte um pouco sobre você.</h1><p class="subtitle">Configure sua foto, interesses e seus dias e horários específicos disponíveis.</p></div></div>
+        <form class="profile-form card" id="profile-form">
+          <div class="profile-head">
+            <span class="avatar avatar-green profile-avatar" id="profile-avatar-preview">AS</span>
+            <div>
+              <h2 id="profile-name-heading">Ana Souza</h2>
+              <p id="profile-email-heading">ana.souza@discente.ifpe.edu.br</p>
+              <small class="field-hint">Formatos aceitos: JPG, PNG, WEBP. A foto ficará visível no seu perfil.</small>
+            </div>
+            <div class="profile-photo-actions">
+              <input type="file" id="profile-photo-input" accept="image/*" hidden />
+              <button type="button" class="outline" id="change-photo-btn">Alterar foto</button>
+              <button type="button" class="text-button danger" id="remove-photo-btn" hidden>Remover foto</button>
+            </div>
+          </div>
+          <div class="form-grid">
+            <label>Nome completo<input name="name" id="profile-name-input" value="Ana Souza" required /></label>
+            <label>Período
+              <select name="period" id="profile-period-select">
+                <option>1º período</option>
+                <option>2º período</option>
+                <option>3º período</option>
+                <option>4º período</option>
+                <option>5º período</option>
+                <option>6º período</option>
+              </select>
+            </label>
+          </div>
+          <label>Interesses e assuntos<input name="interests" id="profile-interests-input" value="Lógica, front-end e organização" placeholder="Ex.: Lógica de programação, Java, Front-end, Carreira..." /></label>
+
+          <div class="profile-availability-section">
+            <div class="availability-header">
+              <strong>Meus dias e horários específicos disponíveis</strong>
+              <small class="field-hint">Adicione os dias da semana e horários exatos em que você tem disponibilidade para encontros.</small>
+            </div>
+            <div class="availability-slots-list" id="profile-slots-list"></div>
+            <div class="availability-builder">
+              <label>Dia da semana
+                <select id="profile-slot-day">
+                  <option value="Segunda-feira">Segunda-feira</option>
+                  <option value="Terça-feira">Terça-feira</option>
+                  <option value="Quarta-feira">Quarta-feira</option>
+                  <option value="Quinta-feira">Quinta-feira</option>
+                  <option value="Sexta-feira">Sexta-feira</option>
+                  <option value="Sábado">Sábado</option>
+                </select>
+              </label>
+              <label>Das
+                <input type="time" id="profile-slot-start" value="14:00" />
+              </label>
+              <label>Até
+                <input type="time" id="profile-slot-end" value="16:00" />
+              </label>
+              <button type="button" class="outline" id="profile-add-slot-btn"><i data-icon="plus"></i>Adicionar dia/horário</button>
+            </div>
+            <input type="hidden" name="availability" id="profile-availability-input" />
+          </div>
+
+          <div class="mentor-availability-preview" id="profile-mentor-availability-box" data-roles="AFILHADO" hidden></div>
+
+          <label>O que você espera do apadrinhamento?<textarea name="bio" id="profile-bio-input">Quero me organizar melhor para o início do curso e conhecer mais sobre as disciplinas.</textarea></label>
+          <div class="form-actions"><button type="button" class="outline" id="profile-cancel-btn">Cancelar</button><button class="primary" type="submit">Salvar alterações</button></div>
+        </form>
+      </section>
     </main>
   </div>
   <div class="modal-backdrop" id="modal"><section class="modal"><button class="modal-close" aria-label="Fechar">×</button><div id="modal-content"></div></section></div><div class="toast" id="toast"></div>
