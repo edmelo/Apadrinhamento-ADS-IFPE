@@ -24,6 +24,7 @@ public class PlatformController {
     @GetMapping("/mentorships") List<MentorshipView> mentorships(Principal p){return service.myMentorships(p.getName()).stream().map(MentorshipView::of).toList();}
     @PatchMapping("/mentorships/{id}") MentorshipView mentorshipStatus(Principal p,@PathVariable Long id,@Valid @RequestBody MentorshipStatusRequest r){return MentorshipView.of(service.updateMentorship(p.getName(),id,r.status()));}
     @DeleteMapping("/mentorships/{id}") ResponseEntity<Void> cancelMentorship(Principal p,@PathVariable Long id){service.cancelMentorship(p.getName(),id);return ResponseEntity.noContent().build();}
+    @GetMapping("/chat/contacts") List<ChatContactView> chatContacts(Principal p){return service.chatContacts(p.getName()).stream().map(ChatContactView::of).toList();}
     @GetMapping("/mentorships/{id}/messages") List<ChatMessageView> messages(Principal p,@PathVariable Long id){return service.messages(p.getName(),id).stream().map(ChatMessageView::of).toList();}
     @PostMapping("/mentorships/{id}/messages") ChatMessageView sendMessage(Principal p,@PathVariable Long id,@Valid @RequestBody ChatMessageRequest r){return ChatMessageView.of(service.sendMessage(p.getName(),id,r.content()));}
     @GetMapping("/meetings") List<MeetingView> meetings(Principal p){return service.myMeetings(p.getName()).stream().map(MeetingView::of).toList();}
@@ -35,7 +36,8 @@ public class PlatformController {
     @GetMapping("/questions/{id}/answers") List<AnswerView> answers(@PathVariable Long id){return service.answers(id).stream().map(AnswerView::of).toList();}
     @PostMapping("/questions/{id}/answers") AnswerView answer(Principal p,@PathVariable Long id,@Valid @RequestBody AnswerRequest r){return AnswerView.of(service.createAnswer(p.getName(),id,r.content()));}
     @GetMapping("/tips") List<TipView> tips(){return service.tips().stream().map(TipView::of).toList();}
-    @PostMapping("/tips") @PreAuthorize("hasRole('PADRINHO')") TipView tip(Principal p,@Valid @RequestBody TipRequest r){return TipView.of(service.createTip(p.getName(),r.title(),r.content(),r.category()));}
+    @PostMapping("/tips") @PreAuthorize("hasRole('PADRINHO')") TipView tip(Principal p,@Valid @RequestBody TipRequest r){return TipView.of(service.createTip(p.getName(),r.title(),r.content(),r.category(),r.sourceQuestionId()));}
+    @GetMapping("/faq/suggestions") FaqSuggestionsView faqSuggestions(){return FaqSuggestionsView.of(service.faqSuggestions());}
     @PostMapping("/reviews") ReviewView review(Principal p,@Valid @RequestBody ReviewRequest r){return ReviewView.of(service.createReview(p.getName(),r.mentorshipId(),r.rating(),r.comment()));}
     @GetMapping("/admin/indicators") @PreAuthorize("hasRole('ADMIN')") Map<String,Long> indicators(){return service.indicators();}
     @GetMapping("/admin/pending") @PreAuthorize("hasRole('ADMIN')") List<MentorshipView> pending(){return service.pending().stream().map(MentorshipView::of).toList();}

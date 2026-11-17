@@ -1,6 +1,7 @@
 package br.edu.ifpe.ads.apadrinhamento.web;
 
 import br.edu.ifpe.ads.apadrinhamento.domain.*;
+import br.edu.ifpe.ads.apadrinhamento.service.PlatformService.*;
 import jakarta.validation.constraints.*;
 import java.time.*;
 import java.util.*;
@@ -41,10 +42,33 @@ final class ApiDtos {
     record QuestionView(Long id,UserView author,String title,String content,String category,Instant createdAt,long answerCount,int likes){static QuestionView of(Question q,long count){return new QuestionView(q.getId(),UserView.of(q.getAuthor()),q.getTitle(),q.getContent(),q.getCategory(),q.getCreatedAt(),count,q.getLikes());}}
     record AnswerRequest(@NotBlank String content){}
     record AnswerView(Long id,UserView author,String content,Instant createdAt){static AnswerView of(Answer a){return new AnswerView(a.getId(),UserView.of(a.getAuthor()),a.getContent(),a.getCreatedAt());}}
-    record TipRequest(@NotBlank String title,@NotBlank String content,String category){}
-    record TipView(Long id,UserView author,String title,String content,String category,Instant createdAt){static TipView of(Tip t){return new TipView(t.getId(),UserView.of(t.getAuthor()),t.getTitle(),t.getContent(),t.getCategory(),t.getCreatedAt());}}
+    record TipRequest(@NotBlank String title,@NotBlank String content,String category,Long sourceQuestionId){}
+    record TipView(Long id,UserView author,String title,String content,String category,Long sourceQuestionId,Instant createdAt){static TipView of(Tip t){return new TipView(t.getId(),UserView.of(t.getAuthor()),t.getTitle(),t.getContent(),t.getCategory(),t.getSourceQuestionId(),t.getCreatedAt());}}
     record ReviewRequest(@NotNull Long mentorshipId,@Min(1)@Max(5)int rating,String comment){}
     record ReviewView(Long id,Long mentorshipId,int rating,String comment,Instant createdAt){static ReviewView of(Review r){return new ReviewView(r.getId(),r.getMentorship().getId(),r.getRating(),r.getComment(),r.getCreatedAt());}}
     record ChatMessageRequest(@NotBlank @Size(max=2000) String content){}
     record ChatMessageView(Long id,Long mentorshipId,UserView sender,String content,Instant createdAt){static ChatMessageView of(ChatMessage c){return new ChatMessageView(c.getId(),c.getMentorship().getId(),UserView.of(c.getSender()),c.getContent(),c.getCreatedAt());}}
+    record ChatContactView(Long mentorshipId,UserView contact,MentorshipStatus mentorshipStatus,boolean chatUnlocked,String lastMessage,Instant lastMessageAt,String lastMessageSenderName,long messageCount,LocalDateTime nextMeetingAt){
+        static ChatContactView of(ChatContactInfo c){
+            return new ChatContactView(c.mentorshipId(),UserView.of(c.contact()),c.mentorshipStatus(),c.chatUnlocked(),c.lastMessage(),c.lastMessageAt(),c.lastMessageSenderName(),c.messageCount(),c.nextMeetingAt());
+        }
+    }
+    record FaqTrendingTermView(String label,String searchKeyword,String forumCategory,String suggestedFaqCategory,long questionCount,long totalLikes,long totalAnswers,long trendScore){
+        static FaqTrendingTermView of(FaqTrendingTerm t){
+            return new FaqTrendingTermView(t.label(),t.searchKeyword(),t.forumCategory(),t.suggestedFaqCategory(),t.questionCount(),t.totalLikes(),t.totalAnswers(),t.trendScore());
+        }
+    }
+    record FaqForumSuggestionView(Long questionId,String title,String excerpt,String forumCategory,String suggestedFaqCategory,String searchKeyword,int likes,long answerCount,long trendScore,String topAnswerPreview,String topAnswerAuthorName,boolean alreadyInFaq){
+        static FaqForumSuggestionView of(FaqForumSuggestion s){
+            return new FaqForumSuggestionView(s.questionId(),s.title(),s.excerpt(),s.forumCategory(),s.suggestedFaqCategory(),s.searchKeyword(),s.likes(),s.answerCount(),s.trendScore(),s.topAnswerPreview(),s.topAnswerAuthorName(),s.alreadyInFaq());
+        }
+    }
+    record FaqSuggestionsView(List<FaqTrendingTermView> trendingTerms,List<FaqForumSuggestionView> trendingTopics){
+        static FaqSuggestionsView of(FaqSuggestionsData d){
+            return new FaqSuggestionsView(
+                d.trendingTerms().stream().map(FaqTrendingTermView::of).toList(),
+                d.trendingTopics().stream().map(FaqForumSuggestionView::of).toList()
+            );
+        }
+    }
 }

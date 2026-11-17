@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 
 @Configuration
 public class DataSeeder {
-    @Bean CommandLineRunner seed(UserRepository users,MentorshipRepository mentorships,MeetingRepository meetings,QuestionRepository questions,AnswerRepository answers,TipRepository tips,PasswordEncoder encoder){return args->{
+    @Bean CommandLineRunner seed(UserRepository users,MentorshipRepository mentorships,MeetingRepository meetings,QuestionRepository questions,AnswerRepository answers,TipRepository tips,ChatMessageRepository messages,PasswordEncoder encoder){return args->{
         if(users.count()>0){
             upgradeLegacyDemoData(users,tips);
             return;
@@ -24,6 +24,14 @@ public class DataSeeder {
         ana.setBio("Quero conhecer melhor o curso e organizar meus estudos.");
         users.save(ana);
 
+        var lucas=new UserAccount("Lucas Oliveira","lucas@discente.ifpe.edu.br",encoder.encode("senha123"),Role.AFILHADO);
+        lucas.setPeriod("1º período");
+        lucas.setInterests("Java, projetos e carreira");
+        lucas.setAvailability("Quarta-feira 15:00 às 17:00");
+        lucas.setAvailabilitySlots("Quarta-feira|15:00|17:00");
+        lucas.setBio("Busco orientação sobre projetos iniciais e estágio.");
+        users.save(lucas);
+
         var joao=mentor(users,encoder,"João Mendes","joao@ifpe.edu.br","5º período","Java, projetos e rotina acadêmica","Segunda-feira 14:00 às 16:00, Quarta-feira 15:00 às 17:00","Segunda-feira|14:00|16:00;Quarta-feira|15:00|17:00");
         var camila=mentor(users,encoder,"Camila Torres","camila@ifpe.edu.br","6º período","Lógica, Java e projetos","Terça-feira 10:00 às 12:00, Quinta-feira 14:00 às 16:00","Terça-feira|10:00|12:00;Quinta-feira|14:00|16:00");
         var rafael=mentor(users,encoder,"Rafael Nunes","rafael@ifpe.edu.br","4º período","Mobile, carreira e rotina acadêmica","Quarta-feira 18:30 às 20:30, Sexta-feira 14:00 às 16:00","Quarta-feira|18:30|20:30;Sexta-feira|14:00|16:00");
@@ -33,7 +41,20 @@ public class DataSeeder {
         var vinculo=new Mentorship(joao,ana);
         vinculo.setStatus(MentorshipStatus.ATIVO);
         mentorships.save(vinculo);
+        var orientacaoAna=new Meeting(vinculo,"Primeiro contato de boas-vindas",LocalDateTime.now().minusDays(2).withHour(14).withMinute(0).withSecond(0).withNano(0),30,"Videochamada",Role.PADRINHO);
+        orientacaoAna.setStatus(MeetingStatus.CONCLUIDO);
+        meetings.save(orientacaoAna);
         meetings.save(new Meeting(vinculo,"Conversa de boas-vindas",LocalDateTime.now().plusDays(2).withHour(14).withMinute(0).withSecond(0).withNano(0),45,"Videochamada",Role.PADRINHO));
+        messages.save(new ChatMessage(vinculo,joao,"Olá Ana! Seja muito bem-vinda a ADS. Qualquer dúvida sobre a rotina do 1º período pode falar por aqui."));
+        messages.save(new ChatMessage(vinculo,ana,"Obrigada, João! Já estou organizando os horários dos laboratórios para o nosso próximo encontro."));
+
+        var vinculoLucas=new Mentorship(joao,lucas);
+        vinculoLucas.setStatus(MentorshipStatus.ATIVO);
+        mentorships.save(vinculoLucas);
+        var encontroLucas=new Meeting(vinculoLucas,"Planejamento de estudos em Java",LocalDateTime.now().plusDays(4).withHour(15).withMinute(0).withSecond(0).withNano(0),45,"Presencial",Role.PADRINHO);
+        encontroLucas.setStatus(MeetingStatus.CONFIRMADO);
+        meetings.save(encontroLucas);
+        messages.save(new ChatMessage(vinculoLucas,joao,"Oi Lucas! Nosso encontro presencial está confirmado. Traga suas dúvidas de Java."));
 
         var q1=new Question(ana,"Material para começar em Lógica de Programação","Alguém indica vídeos, livros ou exercícios para acompanhar a disciplina no 1º período?","Lógica de programação");
         q1.setLikes(5);
@@ -56,7 +77,7 @@ public class DataSeeder {
 
     private void seedFaqTips(TipRepository tips,UserAccount joao,UserAccount camila,UserAccount rafael,UserAccount larissa){
         tips.save(new Tip(joao,"Onde ficam os laboratórios de informática e como acessá-los?","Os laboratórios de ADS ficam sinalizados nos blocos acadêmicos. Chegue alguns minutos antes na primeira semana, verifique o quadro de horários na porta de cada laboratório e utilize seu login institucional quando solicitado.","Vida no campus"));
-        tips.save(new Tip(camila,"Como organizar a rotina de estudos no 1º período?","Separe blocos de 45 a 60 minutos durante a semana para praticar programação, revise os exemplos dados em aula no mesmo dia e anote dúvidas para levar ao seu padrinho ou monitor.","Organização"));
+        tips.save(new Tip(camila,"Como organizar a rotina de estudos no 1º período?","Separe blocos de 45 a 60 minutos durante a semana para praticar lógica de programação, revise os exemplos dados em aula no mesmo dia e anote dúvidas para levar ao seu padrinho ou monitor.","Organização"));
         tips.save(new Tip(rafael,"Como funciona o Q-Acadêmico, matrícula e renovação?","No Q-Acadêmico você consulta horários, notas, frequência, boletins e realiza a renovação de matrícula a cada semestre dentro do prazo do calendário acadêmico do IFPE.","Rotina acadêmica"));
         tips.save(new Tip(larissa,"Como aproveitar ao máximo o Programa de Apadrinhamento?","Combine encontros quinzenais ou semanais pela Agenda, utilize o chat após confirmar um agendamento e leve suas dúvidas sobre disciplinas, projetos e adaptação ao campus.","Sobre o apadrinhamento"));
         tips.save(new Tip(camila,"Quais ferramentas instalar no computador para o início do curso?","Recomendamos instalar o VS Code, Git, JDK (Java), Node.js ou Python conforme as disciplinas do semestre, além de criar sua conta educacional no GitHub Student Developer Pack com o e-mail @discente.ifpe.edu.br.","Estudos e programação"));

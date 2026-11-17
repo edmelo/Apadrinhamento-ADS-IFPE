@@ -4,8 +4,10 @@ import br.edu.ifpe.ads.apadrinhamento.domain.*;
 import br.edu.ifpe.ads.apadrinhamento.repository.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import java.time.LocalDateTime;
+import java.text.Normalizer;
+import java.time.*;
 import java.util.*;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Service @Transactional
@@ -201,7 +203,59 @@ public class PlatformService {
             case PROPOSTO->throw new IllegalArgumentException("Um encontro não pode voltar a ser proposto");
         }
         meeting.setStatus(status);
-        return meetings.save(meeting);
+        var saved=meetings.save(meeting);
+        if(status==MeetingStatus.CONFIRMADO&&proposer==Role.AFILHADO){
+            adjustMentorAvailabilityForMeeting(m.getMentor(),meeting.getStartsAt(),meeting.getDurationMinutes());
+        }
+        return saved;
+    }
+
+    public List<ChatContactInfo> chatContacts(String email){
+        var actor=user(email);
+        var myMentorships=mentorships.findByMentorIdOrGodchildIdOrderByRequestedAtDesc(actor.getId(),actor.getId());
+        var myMeetings=meetings.findForUser(actor.getId());
+        var now=LocalDateTime.now();
+        List<ChatContactInfo> list=new ArrayList<>();
+        for(Mentorship m:myMentorships){
+            long msgCount=messages.countByMentorshipId(m.getId());
+            if(m.getStatus()==MentorshipStatus.RECUSADO)continue;
+            if(m.getStatus()==MentorshipStatus.ENCERRADO&&msgCount==0)continue;
+            UserAccount contact=Objects.equals(m.getMentor().getId(),actor.getId())?m.getGodchild():m.getMentor();
+            boolean unlocked=m.getStatus()==MentorshipStatus.ATIVO&&myMeetings.stream().anyMatch(me->Objects.equals(me.getMentorship().getId(),m.getId())&&(me.getStatus()==MeetingStatus.CONFIRMADO||me.getStatus()==MeetingStatus.CONCLUIDO));
+            var lastMsg=messages.findTopByMentorshipIdOrderByCreatedAtDesc(m.getId()).orElse(null);
+            LocalDateTime nextMeetingAt=myMeetings.stream()
+                .filter(me->Objects.equals(me.getMentorship().getId(),m.getId())&&(me.getStatus()==MeetingStatus.PROPOSTO||me.getStatus()==MeetingStatus.CONFIRMADO)&&!me.getStartsAt().isBefore(now))
+                .map(Meeting::getStartsAt)
+                .min(LocalDateTime::compareTo)
+                .orElse(null);
+            list.add(new ChatContactInfo(
+                m.getId(),
+                contact,
+                m.getStatus(),
+                unlocked,
+                lastMsg!=null?lastMsg.getContent():null,
+                lastMsg!=null?lastMsg.getCreatedAt():null,
+                lastMsg!=null?lastMsg.getSender().getName():null,
+                msgCount,
+                nextMeetingAt,
+                m.getRequestedAt()
+            ));
+        }
+        list.sort(Comparator
+            .comparingInt((ChatContactInfo c)->mentorshipSortOrder(c.mentorshipStatus()))
+            .thenComparing(Comparator.comparing(ChatContactInfo::chatUnlocked).reversed())
+            .thenComparing(Comparator.comparing((ChatContactInfo c)->c.lastMessageAt()!=null?c.lastMessageAt():c.requestedAt()).reversed())
+        );
+        return list;
+    }
+
+    private int mentorshipSortOrder(MentorshipStatus status){
+        return switch(status){
+            case ATIVO->0;
+            case PENDENTE->1;
+            case ENCERRADO->2;
+            case RECUSADO->3;
+        };
     }
 
     public List<ChatMessage> messages(String email,Long mentorshipId){
@@ -237,9 +291,315 @@ public class PlatformService {
     public long answerCount(Long questionId){return answers.countByQuestionIdAndVisibleTrue(questionId);}
     public Answer createAnswer(String email,Long questionId,String content){var q=questions.findById(questionId).filter(Question::isVisible).orElseThrow(()->new IllegalArgumentException("Pergunta não encontrada"));return answers.save(new Answer(q,user(email),content));}
     public List<Tip> tips(){return tips.findByVisibleTrueOrderByCreatedAtDesc();}
-    public Tip createTip(String email,String title,String content,String category){var author=user(email);if(author.getRole()!=Role.PADRINHO&&author.getRole()!=Role.ADMIN)throw new IllegalArgumentException("Somente padrinhos podem compartilhar dicas");return tips.save(new Tip(author,title,content,category));}
+    public Tip createTip(String email,String title,String content,String category){return createTip(email,title,content,category,null);}
+    public Tip createTip(String email,String title,String content,String category,Long sourceQuestionId){
+        var author=user(email);
+        if(author.getRole()!=Role.PADRINHO&&author.getRole()!=Role.ADMIN)throw new IllegalArgumentException("Somente padrinhos podem compartilhar dicas");
+        return tips.save(new Tip(author,title,content,category,sourceQuestionId));
+    }
+
+    public FaqSuggestionsData faqSuggestions(){
+        var visibleQuestions=questions.findByVisibleTrueOrderByCreatedAtDesc();
+        var visibleTips=tips.findByVisibleTrueOrderByCreatedAtDesc();
+        List<FaqForumSuggestion> topicSuggestions=new ArrayList<>();
+        Map<String,List<FaqForumSuggestion>> byCategory=new LinkedHashMap<>();
+
+        for(Question q:visibleQuestions){
+            var qAnswers=answers.findByQuestionIdAndVisibleTrueOrderByCreatedAt(q.getId());
+            long ansCount=qAnswers.size();
+            int likes=q.getLikes();
+            long score=(likes*2L)+(ansCount*3L);
+            String suggestedCat=mapForumToFaqCategory(q.getCategory());
+            String searchKeyword=extractFaqSearchKeyword(q,visibleTips);
+            boolean alreadyInFaq=tips.existsBySourceQuestionIdAndVisibleTrue(q.getId())
+                ||visibleTips.stream().anyMatch(t->normalizeText(t.getTitle()).equals(normalizeText(q.getTitle())));
+            var bestAnswer=qAnswers.stream()
+                .filter(a->a.getAuthor().getRole()==Role.PADRINHO)
+                .findFirst()
+                .orElse(qAnswers.isEmpty()?null:qAnswers.get(0));
+            String excerpt=truncateText(q.getContent(),140);
+            String answerPreview=bestAnswer!=null?truncateText(bestAnswer.getContent(),180):null;
+            String answerAuthor=bestAnswer!=null?bestAnswer.getAuthor().getName():null;
+            var item=new FaqForumSuggestion(
+                q.getId(),q.getTitle(),excerpt,q.getCategory(),suggestedCat,searchKeyword,
+                likes,ansCount,score,answerPreview,answerAuthor,alreadyInFaq
+            );
+            topicSuggestions.add(item);
+            byCategory.computeIfAbsent(q.getCategory(),k->new ArrayList<>()).add(item);
+        }
+
+        List<FaqForumSuggestion> topTopics=topicSuggestions.stream()
+            .sorted(Comparator.comparingLong(FaqForumSuggestion::trendScore).reversed()
+                .thenComparingInt(FaqForumSuggestion::likes).reversed()
+                .thenComparingLong(FaqForumSuggestion::questionId).reversed())
+            .limit(6)
+            .toList();
+
+        List<FaqTrendingTerm> terms=byCategory.entrySet().stream()
+            .map(e->{
+                var items=e.getValue();
+                long qCount=items.size();
+                long totalLikes=items.stream().mapToLong(FaqForumSuggestion::likes).sum();
+                long totalAns=items.stream().mapToLong(FaqForumSuggestion::answerCount).sum();
+                long score=items.stream().mapToLong(FaqForumSuggestion::trendScore).sum();
+                var topItem=items.stream().max(Comparator.comparingLong(FaqForumSuggestion::trendScore)).orElse(items.get(0));
+                return new FaqTrendingTerm(
+                    e.getKey(),
+                    topItem.searchKeyword(),
+                    e.getKey(),
+                    mapForumToFaqCategory(e.getKey()),
+                    qCount,totalLikes,totalAns,score
+                );
+            })
+            .sorted(Comparator.comparingLong(FaqTrendingTerm::trendScore).reversed()
+                .thenComparingLong(FaqTrendingTerm::questionCount).reversed())
+            .limit(6)
+            .toList();
+
+        return new FaqSuggestionsData(terms,topTopics);
+    }
+
     public Review createReview(String email,Long mentorshipId,int rating,String comment){var actor=user(email);var m=mentorships.findById(mentorshipId).orElseThrow(()->new IllegalArgumentException("Vínculo não encontrado"));if(actor.getRole()!=Role.AFILHADO||!Objects.equals(m.getGodchild().getId(),actor.getId()))throw new IllegalArgumentException("Somente o afilhado do vínculo pode avaliar");if(reviews.existsByMentorshipId(mentorshipId))throw new IllegalArgumentException("Este vínculo já foi avaliado");return reviews.save(new Review(m,actor,rating,comment));}
     public Map<String,Long> indicators(){return Map.of("afilhados",users.countByRole(Role.AFILHADO),"padrinhos",users.countByRole(Role.PADRINHO),"vinculosAtivos",mentorships.countByStatus(MentorshipStatus.ATIVO),"aguardandoMatch",mentorships.countByStatus(MentorshipStatus.PENDENTE),"perguntas",questions.count());}
     public List<Mentorship> pending(){return mentorships.findByStatusOrderByRequestedAtAsc(MentorshipStatus.PENDENTE);}
     private void ensureParticipant(UserAccount user,Mentorship m){if(user.getRole()!=Role.ADMIN&&!Objects.equals(m.getMentor().getId(),user.getId())&&!Objects.equals(m.getGodchild().getId(),user.getId()))throw new IllegalArgumentException("Você não participa deste vínculo");}
+
+    // Ajuste automático da disponibilidade do padrinho ao aceitar solicitação de encontro
+    private record AvailabilitySlot(String day,int startMin,Integer endMin){}
+    private static final Pattern HUMAN_SLOT_PATTERN=Pattern.compile("^([\\p{L}-]+)\\s+(\\d{1,2}:\\d{2})(?:\\s*(?:às|-|a)\\s*(\\d{1,2}:\\d{2}))?$",Pattern.CASE_INSENSITIVE);
+
+    private void adjustMentorAvailabilityForMeeting(UserAccount mentor,LocalDateTime startsAt,int durationMinutes){
+        if(mentor==null||startsAt==null)return;
+        List<AvailabilitySlot> current=parseAvailabilitySlots(mentor);
+        if(current.isEmpty())return;
+        DayOfWeek meetingDay=startsAt.getDayOfWeek();
+        int meetStartMin=startsAt.getHour()*60+startsAt.getMinute();
+        int dur=durationMinutes>0?durationMinutes:45;
+        int meetEndMin=Math.min(24*60,meetStartMin+dur);
+
+        List<AvailabilitySlot> updated=new ArrayList<>();
+        boolean changed=false;
+        for(AvailabilitySlot slot:current){
+            DayOfWeek slotDay=parseDayOfWeek(slot.day());
+            if(slotDay!=meetingDay){
+                updated.add(slot);
+                continue;
+            }
+            String canonicalDay=canonicalDayName(slotDay);
+            if(slot.endMin()==null){
+                if(slot.startMin()>=meetStartMin&&slot.startMin()<meetEndMin){
+                    changed=true;
+                }else{
+                    updated.add(slot);
+                }
+                continue;
+            }
+            int sStart=slot.startMin();
+            int sEnd=slot.endMin();
+            if(sStart<meetEndMin&&meetStartMin<sEnd){
+                changed=true;
+                if(meetStartMin-sStart>=15){
+                    updated.add(new AvailabilitySlot(canonicalDay,sStart,meetStartMin));
+                }
+                if(sEnd-meetEndMin>=15){
+                    updated.add(new AvailabilitySlot(canonicalDay,meetEndMin,sEnd));
+                }
+            }else{
+                updated.add(slot);
+            }
+        }
+        if(changed){
+            mentor.setAvailabilitySlots(serializeAvailabilitySlots(updated));
+            mentor.setAvailability(formatAvailabilityHuman(updated));
+            users.save(mentor);
+        }
+    }
+
+    private List<AvailabilitySlot> parseAvailabilitySlots(UserAccount user){
+        List<AvailabilitySlot> list=new ArrayList<>();
+        String rawSlots=user.getAvailabilitySlots();
+        if(rawSlots!=null&&!rawSlots.isBlank()){
+            for(String item:rawSlots.split(";")){
+                String trimmed=item.trim();
+                if(trimmed.isEmpty())continue;
+                String[] parts=trimmed.split("\\|",-1);
+                if(parts.length>=2){
+                    String day=parts[0].trim();
+                    Integer start=parseTimeMinutes(parts[1].trim());
+                    Integer end=parts.length>=3?parseTimeMinutes(parts[2].trim()):null;
+                    if(!day.isEmpty()&&start!=null){
+                        list.add(new AvailabilitySlot(day,start,end));
+                    }
+                }
+            }
+            return list;
+        }
+        String rawText=user.getAvailability();
+        if(rawText!=null&&!rawText.isBlank()){
+            for(String part:rawText.split("[,;]+")){
+                var m=HUMAN_SLOT_PATTERN.matcher(part.trim());
+                if(m.matches()){
+                    String day=m.group(1).trim();
+                    Integer start=parseTimeMinutes(m.group(2));
+                    Integer end=m.group(3)!=null?parseTimeMinutes(m.group(3)):null;
+                    if(start!=null)list.add(new AvailabilitySlot(day,start,end));
+                }
+            }
+        }
+        return list;
+    }
+
+    private Integer parseTimeMinutes(String hhmm){
+        if(hhmm==null||hhmm.isBlank())return null;
+        String[] p=hhmm.trim().split(":");
+        if(p.length!=2)return null;
+        try{
+            int h=Integer.parseInt(p[0]);
+            int m=Integer.parseInt(p[1]);
+            if(h<0||h>23||m<0||m>59)return null;
+            return h*60+m;
+        }catch(NumberFormatException e){
+            return null;
+        }
+    }
+
+    private String formatMinutes(int minutes){
+        int clamped=Math.max(0,Math.min(24*60-1,minutes));
+        return String.format("%02d:%02d",clamped/60,clamped%60);
+    }
+
+    private String serializeAvailabilitySlots(List<AvailabilitySlot> slots){
+        return slots.stream()
+            .map(s->s.day()+"|"+formatMinutes(s.startMin())+"|"+(s.endMin()!=null?formatMinutes(s.endMin()):""))
+            .collect(Collectors.joining(";"));
+    }
+
+    private String formatAvailabilityHuman(List<AvailabilitySlot> slots){
+        return slots.stream()
+            .map(s->s.endMin()!=null?s.day()+" "+formatMinutes(s.startMin())+" às "+formatMinutes(s.endMin()):s.day()+" às "+formatMinutes(s.startMin()))
+            .collect(Collectors.joining(", "));
+    }
+
+    private DayOfWeek parseDayOfWeek(String raw){
+        if(raw==null)return null;
+        String n=normalizeText(raw);
+        if(n.startsWith("segunda"))return DayOfWeek.MONDAY;
+        if(n.startsWith("terca"))return DayOfWeek.TUESDAY;
+        if(n.startsWith("quarta"))return DayOfWeek.WEDNESDAY;
+        if(n.startsWith("quinta"))return DayOfWeek.THURSDAY;
+        if(n.startsWith("sexta"))return DayOfWeek.FRIDAY;
+        if(n.startsWith("sabado"))return DayOfWeek.SATURDAY;
+        if(n.startsWith("domingo"))return DayOfWeek.SUNDAY;
+        return null;
+    }
+
+    private String canonicalDayName(DayOfWeek day){
+        return switch(day){
+            case MONDAY->"Segunda-feira";
+            case TUESDAY->"Terça-feira";
+            case WEDNESDAY->"Quarta-feira";
+            case THURSDAY->"Quinta-feira";
+            case FRIDAY->"Sexta-feira";
+            case SATURDAY->"Sábado";
+            case SUNDAY->"Domingo";
+        };
+    }
+
+    private String mapForumToFaqCategory(String forumCategory){
+        String n=normalizeText(forumCategory);
+        if(n.contains("logica")||n.contains("programacao"))return "Estudos e programação";
+        if(n.contains("estagio")||n.contains("carreira"))return "Estágio e carreira";
+        if(n.contains("rotina")||n.contains("professor")||n.contains("prova"))return "Rotina acadêmica";
+        if(n.contains("campus"))return "Vida no campus";
+        if(n.contains("organizacao"))return "Organização";
+        return "Sobre o apadrinhamento";
+    }
+
+    private static final Set<String> STOP_WORDS=Set.of(
+        "como","para","com","das","dos","que","uma","sobre","quais","onde","qual","quando","porque",
+        "por","nos","nas","pelo","pela","pelos","pelas","mais","menos","muito","muita","entre",
+        "isso","essa","esse","este","esta","voce","voces","algum","alguem","funcionam","funciona",
+        "comecar","conseguir","dicas","primeiro","primeira","disciplinas","disciplina","curso","ads","ifpe"
+    );
+
+    private String extractFaqSearchKeyword(Question q,List<Tip> visibleTips){
+        String combinedTips=normalizeText(visibleTips.stream().map(t->t.getTitle()+" "+t.getContent()+" "+t.getCategory()).collect(Collectors.joining(" ")));
+        List<String> candidates=new ArrayList<>();
+        String titleContent=q.getTitle()+" "+q.getContent()+" "+q.getCategory();
+        for(String rawToken:titleContent.split("[^\\p{L}0-9-]+")){
+            String token=rawToken.trim();
+            String norm=normalizeText(token);
+            if(norm.length()>=4&&!STOP_WORDS.contains(norm)){
+                candidates.add(token);
+            }
+        }
+        for(String candidate:candidates){
+            if(combinedTips.contains(normalizeText(candidate))){
+                return candidate;
+            }
+        }
+        String catNorm=normalizeText(q.getCategory());
+        if(catNorm.contains("logica"))return "programação";
+        if(catNorm.contains("estagio"))return "estágio";
+        if(catNorm.contains("rotina"))return "Q-Acadêmico";
+        if(catNorm.contains("campus"))return "laboratórios";
+        if(catNorm.contains("organizacao"))return "rotina";
+        return candidates.isEmpty()?q.getCategory():candidates.get(0);
+    }
+
+    private String normalizeText(String raw){
+        if(raw==null)return "";
+        return Normalizer.normalize(raw,Normalizer.Form.NFD).replaceAll("\\p{M}","").toLowerCase(Locale.ROOT).trim();
+    }
+
+    private String truncateText(String raw,int maxLen){
+        if(raw==null)return "";
+        String clean=raw.trim().replaceAll("\\s+"," ");
+        if(clean.length()<=maxLen)return clean;
+        return clean.substring(0,Math.max(0,maxLen-1)).trim()+"…";
+    }
+
+    public record ChatContactInfo(
+        Long mentorshipId,
+        UserAccount contact,
+        MentorshipStatus mentorshipStatus,
+        boolean chatUnlocked,
+        String lastMessage,
+        Instant lastMessageAt,
+        String lastMessageSenderName,
+        long messageCount,
+        LocalDateTime nextMeetingAt,
+        Instant requestedAt
+    ){}
+
+    public record FaqTrendingTerm(
+        String label,
+        String searchKeyword,
+        String forumCategory,
+        String suggestedFaqCategory,
+        long questionCount,
+        long totalLikes,
+        long totalAnswers,
+        long trendScore
+    ){}
+
+    public record FaqForumSuggestion(
+        Long questionId,
+        String title,
+        String excerpt,
+        String forumCategory,
+        String suggestedFaqCategory,
+        String searchKeyword,
+        int likes,
+        long answerCount,
+        long trendScore,
+        String topAnswerPreview,
+        String topAnswerAuthorName,
+        boolean alreadyInFaq
+    ){}
+
+    public record FaqSuggestionsData(
+        List<FaqTrendingTerm> trendingTerms,
+        List<FaqForumSuggestion> trendingTopics
+    ){}
 }

@@ -24,6 +24,18 @@ class ApiSecurityIntegrationTest {
         assertThat(admin.statusCode()).isEqualTo(403);
         var tip=http.send(HttpRequest.newBuilder(uri("/api/tips")).header("Authorization","Bearer "+token).header("Content-Type","application/json").POST(HttpRequest.BodyPublishers.ofString("{\"title\":\"Dica\",\"content\":\"Conteúdo\"}")).build(),HttpResponse.BodyHandlers.ofString());
         assertThat(tip.statusCode()).isEqualTo(403);assertThat(tip.body()).contains("permissão");
+
+        var contacts=http.send(HttpRequest.newBuilder(uri("/api/chat/contacts")).header("Authorization","Bearer "+token).GET().build(),HttpResponse.BodyHandlers.ofString());
+        assertThat(contacts.statusCode()).isEqualTo(200);assertThat(contacts.body()).contains("João Mendes");
+
+        var faqSuggestions=http.send(HttpRequest.newBuilder(uri("/api/faq/suggestions")).header("Authorization","Bearer "+token).GET().build(),HttpResponse.BodyHandlers.ofString());
+        assertThat(faqSuggestions.statusCode()).isEqualTo(200);assertThat(faqSuggestions.body()).contains("trendingTerms").contains("trendingTopics");
+
+        var mentorLogin=http.send(HttpRequest.newBuilder(uri("/api/auth/login")).header("Content-Type","application/json").POST(HttpRequest.BodyPublishers.ofString("{\"email\":\"joao@ifpe.edu.br\",\"password\":\"senha123\"}")).build(),HttpResponse.BodyHandlers.ofString());
+        assertThat(mentorLogin.statusCode()).isEqualTo(200);
+        var mentorToken=mentorLogin.body().replaceFirst(".*\\\"token\\\":\\\"([^\\\"]+)\\\".*","$1");
+        var mentorContacts=http.send(HttpRequest.newBuilder(uri("/api/chat/contacts")).header("Authorization","Bearer "+mentorToken).GET().build(),HttpResponse.BodyHandlers.ofString());
+        assertThat(mentorContacts.statusCode()).isEqualTo(200);assertThat(mentorContacts.body()).contains("Ana Souza").contains("Lucas Oliveira");
     }
     private URI uri(String path){return URI.create("http://localhost:"+port+path);}
 }
