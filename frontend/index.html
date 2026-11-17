@@ -43,6 +43,7 @@
         <button class="nav-item" data-roles="AFILHADO" data-view="encontrar" hidden><i data-icon="users"></i>Encontrar padrinho</button>
         <button class="nav-item" data-roles="PADRINHO" data-view="solicitacoes" hidden><i data-icon="heart"></i>Convites e Vínculos</button>
         <button class="nav-item" data-view="agenda"><i data-icon="calendar"></i>Agenda</button>
+        <button class="nav-item" data-roles="AFILHADO,PADRINHO" data-view="chat" hidden><i data-icon="send"></i>Chat</button>
         <button class="nav-item" data-view="forum"><i data-icon="message"></i>Fórum</button>
         <button class="nav-item" data-view="mural"><i data-icon="bookmark"></i>FAQ &amp; Dúvidas</button>
       </nav>
@@ -98,6 +99,21 @@
                 <button class="text-button" data-open-modal="encontro" id="home-request-meeting-btn">Solicitar encontro</button>
                 <button class="text-button" data-open-modal="avaliacao">Avaliar</button>
                 <button class="round-button" id="home-chat-button" data-open-chat="" title="Enviar mensagem"><i data-icon="send"></i></button>
+              </div>
+            </div>
+          </article>
+          <article class="card mentor-summary" id="home-padrinho-contacts" data-roles="PADRINHO" hidden>
+            <div class="card-heading">
+              <div><p class="eyebrow">SEUS CONTATOS E AFILHADOS</p><h2 id="home-padrinho-title">Acompanhamentos ativos</h2><p id="home-padrinho-subtitle">Converse com seus afilhados e gerencie sua disponibilidade.</p></div>
+              <span class="status"><b></b>Disponível</span>
+            </div>
+            <div class="mentor-availability-box" id="home-padrinho-availability"></div>
+            <div class="mentor-footer">
+              <div class="avatar avatar-green large" id="home-padrinho-avatar">JM</div>
+              <span id="home-padrinho-contacts-summary">Acesse o Chat para ver todos os seus contatos no sistema.</span>
+              <div class="mentor-footer-actions">
+                <button class="text-button" data-view="agenda">Minha agenda</button>
+                <button class="primary" data-view="chat"><i data-icon="send"></i>Abrir Chat</button>
               </div>
             </div>
           </article>
@@ -242,6 +258,33 @@
         </div>
       </section>
 
+      <section class="view" id="chat" data-roles="AFILHADO,PADRINHO" hidden>
+        <div class="page-heading">
+          <div><p class="eyebrow">CONVERSAS E CONTATOS</p><h1>Chat com seus contatos.</h1><p class="subtitle">Selecione um contato da sua lista no sistema para acompanhar encontros e trocar mensagens.</p></div>
+          <div class="heading-actions">
+            <button class="outline" data-view="agenda"><i data-icon="calendar"></i>Ir para a Agenda</button>
+            <button class="primary" data-roles="AFILHADO" data-view="encontrar" hidden><i data-icon="users"></i>Encontrar padrinho</button>
+            <button class="primary" data-roles="PADRINHO" data-view="solicitacoes" hidden><i data-icon="heart"></i>Convites e Vínculos</button>
+          </div>
+        </div>
+        <div class="chat-workspace">
+          <aside class="card chat-contacts-panel" aria-label="Lista de contatos">
+            <div class="chat-contacts-head">
+              <div>
+                <p class="eyebrow" style="margin-bottom:4px">CONTATOS NO SISTEMA</p>
+                <h2>Conversas <span class="chat-count-pill" id="chat-contacts-count">0</span></h2>
+              </div>
+            </div>
+            <div class="search-input-wrap chat-contact-search-wrap">
+              <i data-icon="search"></i>
+              <input type="search" id="chat-contact-search" placeholder="Buscar contato por nome, período ou interesse..." aria-label="Buscar contato" />
+            </div>
+            <div class="chat-contacts-list" id="chat-contacts-list"></div>
+          </aside>
+          <section class="card chat-thread-panel" id="chat-thread-panel" aria-label="Conversa ativa"></section>
+        </div>
+      </section>
+
       <section class="view" id="forum">
         <div class="page-heading">
           <div><p class="eyebrow">FÓRUM COLABORATIVO</p><h1>Dúvidas compartilhadas, caminhos mais claros.</h1><p class="subtitle">Pergunte, responda, apoie colegas e construa conhecimento coletivo em ADS.</p></div>
@@ -307,6 +350,7 @@
               <i data-icon="search"></i>
               <input type="search" id="faq-search" placeholder="Pesquisar no FAQ (ex.: laboratórios, faltas, Q-Acadêmico, estágio, apadrinhamento)..." />
             </div>
+            <div class="faq-trending-bar" id="faq-trending-bar"></div>
           </div>
           <span class="big-emoji">🧭</span>
         </div>
@@ -319,6 +363,7 @@
           <button type="button" class="filter" data-faq-cat="Estágio e carreira">💼 Estágio e carreira</button>
           <button type="button" class="filter" data-faq-cat="Sobre o apadrinhamento">🤝 Sobre o apadrinhamento</button>
         </div>
+        <section class="card faq-forum-suggestions" id="faq-forum-suggestions" hidden></section>
         <div class="faq-list" id="mural-grid"></div>
       </section>
 

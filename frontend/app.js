@@ -37,6 +37,8 @@ const state = {
   forumCategory: '',
   forumTab: 'all',
   faqCategory: '',
+  chatContacts: [],
+  faqSuggestions: { trendingTerms: [], trendingTopics: [] },
   activeChatMentorshipId: null
 };
 
@@ -187,6 +189,12 @@ function view(id){
   toggleNotifications(false);
   window.scrollTo({top:0,behavior:'smooth'});
   if(id==='admin')loadAdmin().catch(err=>toast(err.message));
+  if(id==='chat'){
+    renderChatContacts();
+    const target=state.activeChatMentorshipId||state.chatContacts[0]?.mentorshipId;
+    if(target)selectChatContact(target).catch(err=>toast(err.message));
+    else renderEmptyChatThread();
+  }
   if(id==='mural'&&state.user?.role==='AFILHADO'){
     markStepCompletedSilently('guia_campus');
   }
@@ -244,7 +252,7 @@ async function login(email,password){
 function logout(){
   clearInterval(state.syncTimer);
   Object.assign(state,{
-    token:null,user:null,mentors:[],mentorships:[],meetings:[],questions:[],tips:[],pending:[],notifications:[],selectedDate:null,profileSlots:[]
+    token:null,user:null,mentors:[],mentorships:[],meetings:[],questions:[],tips:[],pending:[],notifications:[],selectedDate:null,profileSlots:[],chatContacts:[],faqSuggestions:{trendingTerms:[],trendingTopics:[]},activeChatMentorshipId:null
   });
   localStorage.removeItem('apadrinha_token');
   closeModal();
@@ -262,25 +270,37 @@ function sync(){
 }
 
 async function loadData(){
-  const [me,mentorships,meetings,questions,tips]=await Promise.all([
+  const [me,mentorships,meetings,questions,tips,faqSuggestions]=await Promise.all([
     api('/users/me'),
     api('/mentorships'),
     api('/meetings'),
     api('/questions'),
-    api('/tips')
+    api('/tips'),
+    api('/faq/suggestions').catch(()=>({trendingTerms:[],trendingTopics:[]}))
   ]);
   state.user=me;
-  Object.assign(state,{mentorships,meetings,questions,tips,lastSync:new Date()});
+  Object.assign(state,{mentorships,meetings,questions,tips,faqSuggestions,lastSync:new Date()});
   setUser(me);
   if(state.user.role==='AFILHADO'){
     state.mentors=await api('/mentors');
     renderMentors();
   }
+  if(state.user.role==='AFILHADO'||state.user.role==='PADRINHO'){
+    state.chatContacts=await api('/chat/contacts').catch(()=>[]);
+    renderChatContacts();
+    if(document.getElementById('chat')?.classList.contains('active')){
+      const target=state.activeChatMentorshipId||state.chatContacts[0]?.mentorshipId;
+      if(target)await selectChatContact(target,{silent:true});
+      else renderEmptyChatThread();
+    }
+  }
   renderMentorships();
+  renderPadrinhoHomeSummary();
   renderAgenda();
   renderNextMeeting();
   renderQuestions();
   renderTips();
+  renderFaqSuggestions();
   renderActivity();
   renderChecklist();
   if(state.user.role==='ADMIN')await loadAdmin();
@@ -527,6 +547,34 @@ function renderMentorships(){
   renderIcons(list);
 }
 
+function renderPadrinhoHomeSummary(){
+  if(!state.user||state.user.role!=='PADRINHO')return;
+  const titleEl=document.getElementById('home-padrinho-title');
+  const subtitleEl=document.getElementById('home-padrinho-subtitle');
+  const availEl=document.getElementById('home-padrinho-availability');
+  const avatarEl=document.getElementById('home-padrinho-avatar');
+  const summaryEl=document.getElementById('home-padrinho-contacts-summary');
+  if(!titleEl)return;
+
+  const activeContacts=(state.chatContacts||[]).filter(c=>c.mentorshipStatus==='ATIVO');
+  const unlockedCount=activeContacts.filter(c=>c.chatUnlocked).length;
+  titleEl.textContent=activeContacts.length?`${activeContacts.length} ${activeContacts.length===1?'afilhado ativo':'afilhados ativos'}`:'Nenhum vínculo ativo ainda';
+  subtitleEl.textContent=activeContacts.length
+    ? `${activeContacts.map(c=>c.contact.name.split(' ')[0]).join(', ')} · ${unlockedCount} chat(s) liberado(s)`
+    : 'Confira as solicitações recebidas em Convites e Vínculos.';
+  setAvatarElement(avatarEl,state.user);
+  summaryEl.textContent=activeContacts.length
+    ? 'Use o Chat para conversar com seus contatos no sistema.'
+    : 'Assim que aceitar um vínculo, o contato aparecerá no seu Chat.';
+  const slots=parseAvailabilitySlots(state.user);
+  const chips=slots.length
+    ? slots.map(s=>`<span class="slot-chip green">📅 ${escapeHtml(s.day)} · ${escapeHtml(s.start)}${s.end?' às '+escapeHtml(s.end):''}</span>`).join('')
+    : `<span class="slot-chip">📅 ${escapeHtml(state.user.availability||'Nenhum horário livre cadastrado')}</span>`;
+  if(availEl){
+    availEl.innerHTML=`<small>Sua disponibilidade atual</small><div class="slot-chips">${chips}</div>`;
+  }
+}
+
 function renderHomeMentor(){
   if(state.user.role!=='AFILHADO')return;
   const active=state.mentorships.find(m=>m.status==='ATIVO');
@@ -748,25 +796,113 @@ function findConflictingMeeting(startsAtIso,durationMinutes){
   })||null;
 }
 
-// 3. Chat / Troca de mensagens após confirmação de agendamento ---------------
-async function openChatModal(mentorshipId){
-  const targetId=Number(mentorshipId)||state.mentorships.find(m=>m.status==='ATIVO')?.id;
-  if(!targetId){
-    toast('Você precisa ter um vínculo de apadrinhamento ativo para enviar mensagens.');
+// 3. Chat com Lista de Contatos (Padrinho e Afilhado) ------------------------
+function chatStatusMeta(contact){
+  if(contact.mentorshipStatus==='PENDENTE'){
+    return {cls:'pending',label:'Solicitação pendente'};
+  }
+  if(contact.mentorshipStatus==='ENCERRADO'){
+    return {cls:'muted',label:'Vínculo encerrado'};
+  }
+  if(contact.chatUnlocked){
+    return {cls:'unlocked',label:'Chat liberado'};
+  }
+  return {cls:'awaiting',label:'Confirmar encontro'};
+}
+
+function renderChatContacts(){
+  const list=document.getElementById('chat-contacts-list');
+  const countEl=document.getElementById('chat-contacts-count');
+  if(!list||!state.user)return;
+
+  const contacts=state.chatContacts||[];
+  if(countEl)countEl.textContent=String(contacts.length);
+
+  const term=normalize(document.getElementById('chat-contact-search')?.value||'');
+  const filtered=contacts.filter(c=>{
+    if(!term)return true;
+    return normalize(`${c.contact?.name||''} ${c.contact?.period||''} ${c.contact?.interests||''} ${roleLabel(c.contact?.role)}`).includes(term);
+  });
+
+  if(state.activeChatMentorshipId && !contacts.some(c=>c.mentorshipId===Number(state.activeChatMentorshipId))){
+    state.activeChatMentorshipId=contacts[0]?.mentorshipId||null;
+  }
+
+  if(!contacts.length){
+    list.innerHTML=`<div class="chat-contacts-empty">
+      <p>Você ainda não possui contatos vinculados no sistema.</p>
+      ${state.user.role==='AFILHADO'
+        ? '<button type="button" class="primary" data-view="encontrar">Encontrar padrinho</button>'
+        : '<button type="button" class="primary" data-view="solicitacoes">Ver convites e vínculos</button>'}
+    </div>`;
     return;
   }
-  const mentorship=state.mentorships.find(m=>m.id===targetId);
-  if(!mentorship){
-    toast('Vínculo não encontrado.');
+
+  if(!filtered.length){
+    list.innerHTML='<p class="chat-contacts-empty">Nenhum contato encontrado para a busca informada.</p>';
+    return;
+  }
+
+  list.innerHTML=filtered.map(c=>{
+    const active=Number(state.activeChatMentorshipId)===c.mentorshipId;
+    const status=chatStatusMeta(c);
+    const preview=c.lastMessage
+      ? `${c.lastMessageSenderName?c.lastMessageSenderName.split(' ')[0]+': ':''}${c.lastMessage}`
+      : (c.chatUnlocked?'Conversa liberada. Envie uma mensagem!':'Aguardando confirmação de encontro para conversar.');
+    return `<button type="button" class="chat-contact-item ${active?'active':''}" data-select-chat="${c.mentorshipId}">
+      ${avatarHtml(c.contact,c.contact.role==='PADRINHO'?'avatar-purple':'avatar-green')}
+      <div class="chat-contact-body">
+        <div class="chat-contact-top">
+          <strong>${escapeHtml(c.contact.name)}</strong>
+          ${c.lastMessageAt?`<small>${relativeTime(c.lastMessageAt)}</small>`:''}
+        </div>
+        <div class="chat-contact-sub">
+          <span>${escapeHtml(roleLabel(c.contact.role))}${c.contact.period?' · '+escapeHtml(c.contact.period):''}</span>
+          <span class="chat-contact-badge ${status.cls}">${status.label}</span>
+        </div>
+        <p class="chat-contact-preview">${escapeHtml(preview)}</p>
+      </div>
+    </button>`;
+  }).join('');
+}
+
+function renderEmptyChatThread(){
+  const panel=document.getElementById('chat-thread-panel');
+  if(!panel||!state.user)return;
+  panel.innerHTML=`<div class="chat-thread-empty">
+    <span class="avatar avatar-green large">💬</span>
+    <h2>Selecione um contato para conversar</h2>
+    <p>${state.chatContacts?.length
+      ? 'Escolha um contato na lista ao lado para visualizar o histórico e enviar mensagens.'
+      : (state.user.role==='AFILHADO'
+        ? 'Solicite um vínculo em “Encontrar padrinho” para adicionar seu padrinho à lista de contatos.'
+        : 'Aceite solicitações de apadrinhamento para conversar com seus afilhados aqui.')}</p>
+  </div>`;
+}
+
+async function selectChatContact(mentorshipId,{silent=false}={}){
+  const targetId=Number(mentorshipId);
+  const contactItem=(state.chatContacts||[]).find(c=>c.mentorshipId===targetId);
+  if(!contactItem){
+    renderEmptyChatThread();
     return;
   }
   state.activeChatMentorshipId=targetId;
-  const other=state.user.role==='PADRINHO'?mentorship.godchild:mentorship.mentor;
-  const unlocked=hasConfirmedMeeting(targetId);
+  renderChatContacts();
+
+  const panel=document.getElementById('chat-thread-panel');
+  if(!panel)return;
+  const other=contactItem.contact;
+  const unlocked=Boolean(contactItem.chatUnlocked);
+  const isActiveMentorship=contactItem.mentorshipStatus==='ATIVO';
   let msgs=[];
-  try{
-    msgs=await api(`/mentorships/${targetId}/messages`);
-  }catch{}
+  if(contactItem.mentorshipStatus!=='PENDENTE'){
+    try{
+      msgs=await api(`/mentorships/${targetId}/messages`);
+    }catch(err){
+      if(!silent)toast(err.message);
+    }
+  }
 
   const messagesHtml=msgs.length
     ? msgs.map(msg=>{
@@ -776,35 +912,64 @@ async function openChatModal(mentorshipId){
           <p>${escapeHtml(msg.content)}</p>
         </div>`;
       }).join('')
-    : `<p class="empty-state" style="padding:24px 10px;margin:0">${unlocked?'Nenhuma mensagem ainda. Envie um “Olá” para combinar os detalhes do encontro!':'As mensagens aparecerão aqui assim que o agendamento for confirmado.'}</p>`;
+    : `<p class="empty-state" style="padding:28px 12px;margin:0">${unlocked?'Nenhuma mensagem ainda. Envie um “Olá” para iniciar a conversa!':'As mensagens aparecerão aqui assim que o primeiro encontro deste vínculo for confirmado.'}</p>`;
 
-  showModal(`
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
-      ${avatarHtml(other,'avatar-purple large')}
-      <div>
-        <p class="eyebrow" style="margin:0">MENSAGENS DO APADRINHAMENTO</p>
-        <h2 style="margin:2px 0">${escapeHtml(other.name)}</h2>
-        <p style="margin:0">${escapeHtml(roleLabel(other.role))} · ${escapeHtml(other.period||'ADS')}</p>
+  const bannerText=contactItem.mentorshipStatus==='PENDENTE'
+    ? 'Solicitação de vínculo ainda pendente de aceite.'
+    : contactItem.mentorshipStatus==='ENCERRADO'
+      ? 'Vínculo encerrado. Histórico disponível apenas para consulta.'
+      : unlocked
+        ? 'Agendamento confirmado! A troca de mensagens está liberada.'
+        : 'A troca de mensagens é liberada após a confirmação de um agendamento na Agenda.';
+
+  const headerActions=isActiveMentorship
+    ? `<button type="button" class="outline" data-open-modal="encontro" data-mentorship="${targetId}"><i data-icon="calendar"></i>${state.user.role==='PADRINHO'?'Agendar encontro':'Solicitar encontro'}</button>`
+    : '';
+
+  panel.innerHTML=`
+    <header class="chat-thread-header">
+      <div class="chat-thread-person">
+        ${avatarHtml(other,other.role==='PADRINHO'?'avatar-purple large':'avatar-green large')}
+        <div>
+          <p class="eyebrow" style="margin:0">${escapeHtml(roleLabel(other.role)).toUpperCase()}</p>
+          <h2>${escapeHtml(other.name)}</h2>
+          <p>${escapeHtml(other.period||'ADS IFPE')}${other.interests?' · '+escapeHtml(other.interests):''}</p>
+        </div>
       </div>
-    </div>
+      <div class="chat-thread-actions">${headerActions}</div>
+    </header>
     <div class="chat-status-banner ${unlocked?'unlocked':'locked'}">
       <i data-icon="${unlocked?'check':'clock'}"></i>
-      <span>${unlocked?'Agendamento confirmado! A troca de mensagens está liberada.':'A troca de mensagens é liberada após a confirmação de um agendamento na Agenda.'}</span>
+      <span>${bannerText}</span>
     </div>
-    <div class="chat-messages-box" id="chat-messages-box">${messagesHtml}</div>
+    <div class="chat-messages-box chat-page-messages" id="chat-page-messages">${messagesHtml}</div>
     ${unlocked
-      ? `<form data-modal-form="chat">
-          <input type="hidden" name="mentorshipId" value="${targetId}" />
+      ? `<form id="chat-page-form" data-mentorship-id="${targetId}">
           <div class="chat-input-row">
-            <textarea name="content" placeholder="Escreva sua mensagem para ${escapeHtml(other.name.split(' ')[0])}..." required maxlength="2000"></textarea>
+            <textarea name="content" id="chat-page-input" placeholder="Escreva sua mensagem para ${escapeHtml(other.name.split(' ')[0])}..." required maxlength="2000"></textarea>
             <button type="submit" class="primary"><i data-icon="send"></i>Enviar</button>
           </div>
         </form>`
-      : `<div class="help-actions"><button type="button" class="primary" data-view="agenda"><i data-icon="calendar"></i>Ir para a Agenda confirmar encontro</button><button type="button" class="outline modal-close-button">Fechar</button></div>`
+      : `<div class="chat-locked-actions">
+          ${contactItem.mentorshipStatus==='PENDENTE'&&state.user.role==='PADRINHO'
+            ? '<button type="button" class="primary" data-view="solicitacoes">Avaliar solicitação em Convites</button>'
+            : '<button type="button" class="primary" data-view="agenda"><i data-icon="calendar"></i>Ir para a Agenda confirmar encontro</button>'}
+        </div>`
     }
-  `,true);
-  const box=document.getElementById('chat-messages-box');
+  `;
+  renderIcons(panel);
+  const box=document.getElementById('chat-page-messages');
   if(box)box.scrollTop=box.scrollHeight;
+}
+
+async function openChatView(mentorshipId){
+  const targetId=Number(mentorshipId)||state.activeChatMentorshipId||state.chatContacts[0]?.mentorshipId||state.mentorships.find(m=>m.status==='ATIVO')?.id;
+  if(!targetId){
+    view('chat');
+    return;
+  }
+  state.activeChatMentorshipId=targetId;
+  view('chat');
 }
 
 // 8. Fórum Colaborativo (Mais visual, cards, categorias e interação) ---------
@@ -913,7 +1078,76 @@ async function openTopic(questionId){
   `,true);
 }
 
-// 9. Mural convertido em FAQ Categorizado ------------------------------------
+// 9. Mural convertido em FAQ Categorizado + Sugestões em Alta do Fórum ------
+function renderFaqSuggestions(){
+  const trendingBar=document.getElementById('faq-trending-bar');
+  const box=document.getElementById('faq-forum-suggestions');
+  const data=state.faqSuggestions||{trendingTerms:[],trendingTopics:[]};
+  const terms=data.trendingTerms||[];
+  const topics=data.trendingTopics||[];
+  const searchTerm=normalize(document.getElementById('faq-search')?.value||'');
+
+  if(trendingBar){
+    if(terms.length){
+      trendingBar.hidden=false;
+      trendingBar.innerHTML=`<span class="faq-trending-label">🔥 Em alta no Fórum:</span>${terms.map(t=>{
+        const isActive=searchTerm && normalize(t.searchKeyword)===searchTerm;
+        return `<button type="button" class="faq-trending-chip ${isActive?'active':''}" data-faq-apply-search="${escapeHtml(t.searchKeyword)}" title="Filtrar FAQ por ${escapeHtml(t.label)} (${t.totalLikes} úteis · ${t.totalAnswers} respostas)">
+          <span>${escapeHtml(t.label)}</span>
+          <small>${t.questionCount} ${t.questionCount===1?'tópico':'tópicos'}</small>
+        </button>`;
+      }).join('')}${searchTerm?'<button type="button" class="faq-trending-clear" data-faq-clear-search>Limpar busca</button>':''}`;
+    }else{
+      trendingBar.hidden=true;
+      trendingBar.innerHTML='';
+    }
+  }
+
+  if(!box)return;
+  const visibleTopics=searchTerm
+    ? topics.filter(t=>normalize(`${t.title} ${t.excerpt} ${t.forumCategory} ${t.suggestedFaqCategory} ${t.searchKeyword}`).includes(searchTerm))
+    : topics.slice(0,3);
+
+  if(!visibleTopics.length){
+    box.hidden=true;
+    box.innerHTML='';
+    return;
+  }
+
+  const isMentor=state.user?.role==='PADRINHO';
+  box.hidden=false;
+  box.innerHTML=`
+    <div class="faq-suggestions-head">
+      <div>
+        <p class="eyebrow" style="margin-bottom:4px">INTEGRAÇÃO FÓRUM → FAQ</p>
+        <h2>Assuntos em alta no Fórum para facilitar sua busca</h2>
+      </div>
+      <button type="button" class="text-button" data-view="forum">Explorar fórum completo <i data-icon="arrow"></i></button>
+    </div>
+    <div class="faq-suggestions-grid">
+      ${visibleTopics.map(t=>`
+        <article class="faq-suggestion-card">
+          <div class="faq-suggestion-meta">
+            <span class="faq-hot-badge">🔥 Em alta</span>
+            <span class="faq-cat-pill">${escapeHtml(t.suggestedFaqCategory)}</span>
+            <small>👍 ${t.likes} · 💬 ${t.answerCount}</small>
+          </div>
+          <h3>${escapeHtml(t.title)}</h3>
+          <p>${escapeHtml(t.topAnswerPreview?`Melhor resposta (${t.topAnswerAuthorName}): ${t.topAnswerPreview}`:t.excerpt)}</p>
+          <div class="faq-suggestion-actions">
+            <button type="button" class="outline small-action-btn" data-faq-apply-search="${escapeHtml(t.searchKeyword)}"><i data-icon="search"></i>Buscar “${escapeHtml(t.searchKeyword)}” no FAQ</button>
+            <button type="button" class="text-button" data-topic="${t.questionId}">Ver discussão</button>
+            ${isMentor?(t.alreadyInFaq
+              ? '<span class="faq-included-tag">✓ Já no FAQ</span>'
+              : `<button type="button" class="text-button" data-promote-faq="${t.questionId}">+ Adicionar ao FAQ</button>`):''}
+          </div>
+        </article>
+      `).join('')}
+    </div>
+  `;
+  renderIcons(box);
+}
+
 function renderTips(){
   const grid=document.getElementById('mural-grid');
   if(!grid)return;
@@ -1331,8 +1565,13 @@ function modal(kind,context={}){
     html='<h2>Fazer uma pergunta no Fórum</h2><p>Compartilhe sua dúvida com os colegas e padrinhos de ADS.</p><form data-modal-form="pergunta"><label>Título da dúvida<input name="title" placeholder="Ex.: Como me preparar para a primeira prova de Lógica?" required maxlength="255"></label><label>Categoria<select name="category"><option>Lógica de programação</option><option>Rotina acadêmica</option><option>Professores e disciplinas</option><option>Provas e avaliações</option><option>Estágio</option><option>Carreira</option><option>Vida no campus</option><option>Organização</option></select></label><label>Detalhes<textarea name="content" placeholder="Explique sua dúvida com detalhes para receber respostas melhores..." required maxlength="3000"></textarea></label><button class="primary">Publicar pergunta</button></form>';
   }
   if(kind==='dica'){
+    const faqCategories=['Vida no campus','Rotina acadêmica','Estudos e programação','Organização','Estágio e carreira','Sobre o apadrinhamento'];
+    const preTitle=context.title||'';
+    const preCat=faqCategories.includes(context.category)?context.category:faqCategories[0];
+    const preContent=context.content||'';
+    const sourceId=context.questionId||'';
     html=state.user.role==='PADRINHO'
-      ? '<h2>Adicionar pergunta e resposta ao FAQ</h2><p>Cadastre uma dúvida frequente e sua resposta para orientar os calouros.</p><form data-modal-form="dica"><label>Pergunta frequente<input name="title" placeholder="Ex.: Como acessar os laboratórios fora do horário de aula?" required maxlength="255"></label><label>Categoria do FAQ<select name="category"><option value="Vida no campus">Vida no campus</option><option value="Rotina acadêmica">Rotina acadêmica</option><option value="Estudos e programação">Estudos e programação</option><option value="Organização">Organização</option><option value="Estágio e carreira">Estágio e carreira</option><option value="Sobre o apadrinhamento">Sobre o apadrinhamento</option></select></label><label>Resposta detalhada<textarea name="content" required maxlength="5000"></textarea></label><button class="primary">Publicar no FAQ</button></form>'
+      ? `<h2>Adicionar pergunta e resposta ao FAQ</h2><p>${sourceId?'Revise a dúvida em alta no fórum e publique uma resposta consolidada no FAQ.':'Cadastre uma dúvida frequente e sua resposta para orientar os calouros.'}</p><form data-modal-form="dica"><input type="hidden" name="sourceQuestionId" value="${escapeHtml(sourceId)}"><label>Pergunta frequente<input name="title" value="${escapeHtml(preTitle)}" placeholder="Ex.: Como acessar os laboratórios fora do horário de aula?" required maxlength="255"></label><label>Categoria do FAQ<select name="category">${faqCategories.map(c=>`<option value="${escapeHtml(c)}"${c===preCat?' selected':''}>${escapeHtml(c)}</option>`).join('')}</select></label><label>Resposta detalhada<textarea name="content" required maxlength="5000">${escapeHtml(preContent)}</textarea></label><button class="primary">Publicar no FAQ</button></form>`
       : '<h2>Publicação restrita</h2><p>Somente padrinhos podem adicionar novos itens ao FAQ.</p>';
   }
   if(kind==='resposta'){
@@ -1379,16 +1618,11 @@ async function submitModal(form){
     await api('/questions',{method:'POST',body:JSON.stringify(data)});
     if(state.user?.role==='AFILHADO')await markStepCompletedSilently('primeira_pergunta');
   }
-  if(kind==='dica')await api('/tips',{method:'POST',body:JSON.stringify(data)});
+  if(kind==='dica')await api('/tips',{method:'POST',body:JSON.stringify({title:data.title,content:data.content,category:data.category,sourceQuestionId:data.sourceQuestionId?Number(data.sourceQuestionId):null})});
   if(kind==='resposta')await api(`/questions/${data.questionId}/answers`,{method:'POST',body:JSON.stringify({content:data.content})});
   if(kind==='avaliacao'){
     if(!data.mentorshipId)throw new Error('Você ainda não possui vínculo ativo');
     await api('/reviews',{method:'POST',body:JSON.stringify({mentorshipId:Number(data.mentorshipId),rating:Number(data.rating),comment:data.comment})});
-  }
-  if(kind==='chat'){
-    await api(`/mentorships/${data.mentorshipId}/messages`,{method:'POST',body:JSON.stringify({content:data.content})});
-    await openChatModal(Number(data.mentorshipId));
-    return;
   }
   closeModal();
   toast(kind==='encontro'
@@ -1522,9 +1756,39 @@ function bindEvents(){
     renderMentors();
   });
 
-  // Busca do Fórum e FAQ
+  // Busca do Fórum, FAQ e Chat
   document.getElementById('forum-search')?.addEventListener('input',renderQuestions);
-  document.getElementById('faq-search')?.addEventListener('input',renderTips);
+  document.getElementById('faq-search')?.addEventListener('input',()=>{renderTips();renderFaqSuggestions();});
+  document.getElementById('chat-contact-search')?.addEventListener('input',renderChatContacts);
+
+  document.getElementById('chat-thread-panel')?.addEventListener('submit',async e=>{
+    const form=e.target.closest('#chat-page-form');
+    if(!form)return;
+    e.preventDefault();
+    const mentorshipId=Number(form.dataset.mentorshipId);
+    const input=form.querySelector('textarea[name="content"]');
+    const content=input?.value.trim()||'';
+    if(!content)return;
+    const btn=form.querySelector('button[type="submit"]');
+    if(btn)btn.disabled=true;
+    try{
+      await api(`/mentorships/${mentorshipId}/messages`,{method:'POST',body:JSON.stringify({content})});
+      if(input)input.value='';
+      state.chatContacts=await api('/chat/contacts');
+      await selectChatContact(mentorshipId);
+    }catch(err){
+      toast(err.message);
+    }finally{
+      if(btn)btn.disabled=false;
+    }
+  });
+
+  document.getElementById('chat-thread-panel')?.addEventListener('keydown',e=>{
+    if(e.key==='Enter'&&!e.shiftKey&&e.target.id==='chat-page-input'){
+      e.preventDefault();
+      e.target.form?.requestSubmit();
+    }
+  });
 
   // Primeiros Passos: mudança em checkboxes
   document.getElementById('onboarding-checklist')?.addEventListener('change',e=>{
@@ -1622,9 +1886,15 @@ function bindEvents(){
       return;
     }
 
+    const selectChat=e.target.closest('[data-select-chat]');
+    if(selectChat){
+      await selectChatContact(selectChat.dataset.selectChat);
+      return;
+    }
+
     const chatTrigger=e.target.closest('[data-open-chat]');
     if(chatTrigger){
-      await openChatModal(chatTrigger.dataset.openChat);
+      await openChatView(chatTrigger.dataset.openChat);
       return;
     }
 
@@ -1648,7 +1918,9 @@ function bindEvents(){
       try{
         const updatedQ=await api(`/questions/${qId}/like`,{method:'POST'});
         state.questions=state.questions.map(q=>q.id===qId?updatedQ:q);
+        state.faqSuggestions=await api('/faq/suggestions').catch(()=>state.faqSuggestions);
         renderQuestions();
+        renderFaqSuggestions();
         if(document.getElementById('modal').classList.contains('open')){
           await openTopic(qId);
         }
@@ -1660,6 +1932,46 @@ function bindEvents(){
     if(faqCat){
       state.faqCategory=faqCat.dataset.faqCat||'';
       renderTips();
+      renderFaqSuggestions();
+      return;
+    }
+
+    const faqApplySearch=e.target.closest('[data-faq-apply-search]');
+    if(faqApplySearch){
+      const keyword=faqApplySearch.dataset.faqApplySearch||'';
+      const searchEl=document.getElementById('faq-search');
+      if(searchEl){
+        const isSame=normalize(searchEl.value)===normalize(keyword);
+        searchEl.value=isSame?'':keyword;
+        state.faqCategory='';
+        renderTips();
+        renderFaqSuggestions();
+        if(!isSame)document.getElementById('mural-grid')?.scrollIntoView({behavior:'smooth',block:'nearest'});
+      }
+      return;
+    }
+
+    if(e.target.closest('[data-faq-clear-search]')){
+      const searchEl=document.getElementById('faq-search');
+      if(searchEl)searchEl.value='';
+      state.faqCategory='';
+      renderTips();
+      renderFaqSuggestions();
+      return;
+    }
+
+    const promoteFaq=e.target.closest('[data-promote-faq]');
+    if(promoteFaq){
+      const qId=Number(promoteFaq.dataset.promoteFaq);
+      const item=(state.faqSuggestions?.trendingTopics||[]).find(t=>t.questionId===qId);
+      if(item){
+        modal('dica',{
+          questionId:item.questionId,
+          title:item.title,
+          category:item.suggestedFaqCategory,
+          content:item.topAnswerPreview||item.excerpt
+        });
+      }
       return;
     }
 
@@ -1736,12 +2048,15 @@ function bindEvents(){
     if(meeting){
       const status=meeting.dataset.status;
       if(status==='CANCELADO'&&!confirm('Deseja realmente cancelar este encontro?'))return;
+      const confirmMsg=state.user?.role==='PADRINHO'
+        ? 'Solicitação aceita! Sua disponibilidade e o chat foram atualizados.'
+        : 'Encontro confirmado! As mensagens com seu par foram liberadas.';
       await run(async ()=>{
         await api(`/meetings/${meeting.dataset.id}`,{method:'PATCH',body:JSON.stringify({status})});
         if(status==='CONFIRMADO'&&state.user?.role==='AFILHADO'){
           await markStepCompletedSilently('primeiro_encontro');
         }
-      },{CONFIRMADO:'Encontro confirmado! As mensagens com seu par foram liberadas.',CANCELADO:'Encontro cancelado.',CONCLUIDO:'Encontro concluído!'}[status]);
+      },{CONFIRMADO:confirmMsg,CANCELADO:'Encontro cancelado.',CONCLUIDO:'Encontro concluído!'}[status]);
     }
   });
 
